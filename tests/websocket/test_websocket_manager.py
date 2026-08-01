@@ -3,7 +3,6 @@ Run: pytest tests/test_websocket_manager.py -v
 
 These test the ConnectionManager in isolation with a fake WebSocket, so no
 FastAPI app, DB, or real socket is needed — the fastest tier of the pyramid.
-User IDs are plain ints here, matching the real User.id (int PK), not UUID.
 """
 from __future__ import annotations
 
@@ -97,12 +96,6 @@ async def test_broadcast_reaches_everyone_except_excluded_user(manager: Connecti
 
 @pytest.mark.asyncio
 async def test_broadcast_survives_a_dead_socket(manager: ConnectionManager):
-    """
-    A dropped connection mid-broadcast shouldn't raise or block delivery to
-    everyone else. Also regression-guards the _drop_socket fix: a dead
-    socket's user entry must be fully removed, not left as an empty set, or
-    is_online() lies.
-    """
     alive_user, dead_user = 1, 2
     alive_ws = FakeWebSocket()
     dead_ws = FakeWebSocket(fail_on_send=True)
