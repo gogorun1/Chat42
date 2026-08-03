@@ -4,10 +4,11 @@ from unittest import TestCase
 from PIL import Image
 
 from app.services.cat_detection import (
-    InvalidImageError, 
+    InvalidImageError,
     ZeroShotCatDetector,
-    decode_image
+    decode_image,
 )
+
 
 def make_png(size: tuple[int, int] = (4, 4)) -> bytes:
     buffer = BytesIO()
@@ -38,57 +39,69 @@ class DecodeImageTests(TestCase):
         with self.assertRaisesRegex(InvalidImageError, "dimensions"):
             decode_image(make_png(), max_pixels=15)
 
-class FakeClassifier:
-    def __init__(self, cat_score: float) -> None:
-        self.cat_score = cat_score
+
+class FakeObjectDetector:
+    def __init__(self, predictions: list[dict[str, object]]) -> None:
+        self.predictions = predictions
         self.received_mode: str | None = None
         self.received_labels: list[str] = []
 
-    def __call__(self, 
-                image: Image.Image,
-                *,
-                candidate_labels: list[str],
-            ) -> list[dict[str,str | float]]:
-                self.received_mode = image.mode
-                self.received_labels = candidate_labels
+    def __call__(
+        self,
+        image: Image.Image,
+        *,
+        candidate_labels: list[str],
+    ) -> list[dict[str, object]]:
+        self.received_mode = image.mode
+        self.received_labels = candidate_labels
+        return self.predictions
 
-                return [
-                     {
-                          "label": candidate_labels[0],
-                          "score": self.cat_score,
-                     },
-                     {
-                          "label": candidate_labels[1],
-                          "score": 1.0 - self.cat_score,
-                     },
-                ]
 
 class ZeroShotCatDetectorTests(TestCase):
-      def test_accepts_cat_above_threshold(self) -> None:
-          classifier = FakeClassifier(cat_score=0.81)
-          detector = ZeroShotCatDetector(
-              classifier=classifier,
-              threshold=0.70,
-              model_name="test-model",
-          )
+    def make_detector(
+        self,
+        predictions: list[dict[str, object]],
+        *,
+        threshold: float = 0.25,
+    ) -> tuple[ZeroShotCatDetector, FakeObjectDetector]:
+        model = FakeObjectDetector(predictions)
+        detector = ZeroShotCatDetector(
+            object_detector=model,
+            threshold=threshold,
+            model_name="test-model",
+        )
+        return detector, model
 
-          result = detector.detect(make_png())
+    def test_accepts_highest_cat_detection_above_threshold(self) -> None:
+        detector, model = self.make_detector(
+            [
+                {"label": "cat", "score": 0.26, "box": {}},
+                {"label": "cat", "score": 0.31, "box": {}},
+            ]
+        )
 
-          self.assertTrue(result.is_cat)
-          self.assertEqual(result.confidence, 0.81)
-          self.assertEqual(result.model, "test-model")
-          self.assertEqual(classifier.received_mode, "RGB")
-          self.assertEqual(len(classifier.received_labels),
-          2)
+        result = detector.detect(make_png())
 
-      def test_rejects_image_below_threshold(self) -> None:
-          detector = ZeroShotCatDetector(
-              classifier=FakeClassifier(cat_score=0.42),
-              threshold=0.70,
-              model_name="test-model",
-          )
+        self.assertTrue(result.is_cat)
+        self.assertEqual(result.confidence, 0.31)
+        self.assertEqual(result.model, "test-model")
+        self.assertEqual(model.received_mode, "RGB")
+        self.assertEqual(model.received_labels, ["cat"])
 
-          result = detector.detect(make_png())
+    def test_rejects_cat_detection_below_threshold(self) -> None:
+        detector, _ = self.make_detector(
+            [{"label": "cat", "score": 0.19, "box": {}}]
+        )
 
-          self.assertFalse(result.is_cat)
-          self.assertEqual(result.confidence, 0.42)
+        result = detector.detect(make_png())
+
+        self.assertFalse(result.is_cat)
+        self.assertEqual(result.confidence, 0.19)
+
+    def test_rejects_image_with_no_cat_detections(self) -> None:
+        detector, _ = self.make_detector([])
+
+        result = detector.detect(make_png())
+
+        self.assertFalse(result.is_cat)
+        self.assertEqual(result.confidence, 0.0)

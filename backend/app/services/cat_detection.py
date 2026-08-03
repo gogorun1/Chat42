@@ -6,9 +6,9 @@ from PIL import Image, UnidentifiedImageError
 
 MAX_IMAGE_BYTES = 10 * 1024 * 1024
 MAX_IMAGE_PIXELS = 25_000_000
-CAT_LABEL = "a photo containing a cat"
-NON_CAT_LABEL = "a photo without a cat"
-CANDIDATE_LABELS = [CAT_LABEL, NON_CAT_LABEL]
+CAT_LABEL = "cat"
+CANDIDATE_LABELS = [CAT_LABEL]
+
 
 @dataclass(frozen=True)
 class CatDetectionResult:
@@ -16,13 +16,16 @@ class CatDetectionResult:
     confidence: float
     model: str
 
+
 class CatDetector(Protocol):
     def detect(self, image_bytes: bytes) -> CatDetectionResult:
         """Detect whether an image contains a cat."""
         ...
 
+
 class InvalidImageError(ValueError):
     """Raised when input cannot be safely decoded as an image"""
+
 
 def decode_image(
     image_bytes: bytes,
@@ -54,49 +57,52 @@ def decode_image(
     ) as exc:
         raise InvalidImageError("Invalid image") from exc
 
-class ZeroShotClassifier(Protocol):
-    def __call__(self, image: Image.Image, *, candidate_labels: list[str],) -> list[dict[str, str | float]]:
+
+class ZeroShotObjectDetector(Protocol):
+    def __call__(
+        self,
+        image: Image.Image,
+        *,
+        candidate_labels: list[str],
+    ) -> list[dict[str, object]]:
         ...
+
 
 class ZeroShotCatDetector:
     def __init__(
-            self,
-            classifier: ZeroShotClassifier,
-            *,
-            threshold: float = 0.70,
-            model_name: str,
-            ) -> None:
+        self,
+        object_detector: ZeroShotObjectDetector,
+        *,
+        threshold: float,
+        model_name: str,
+    ) -> None:
         if not 0.0 <= threshold <= 1.0:
-            raise ValueError("Threshold must be 0 - 1")
-        self.classifier = classifier
+            raise ValueError("Threshold must be between 0 and 1")
+
+        self.object_detector = object_detector
         self.threshold = threshold
         self.model_name = model_name
 
     def detect(self, image_bytes: bytes) -> CatDetectionResult:
         image = decode_image(image_bytes)
 
-        predictions = self.classifier(
+        predictions = self.object_detector(
             image,
             candidate_labels=CANDIDATE_LABELS,
         )
 
-        cat_prediction = next(
-            (
-                prediction
-                for prediction in predictions
-                if prediction.get("label") == CAT_LABEL
-            ),
-            None,
-        )
+        cat_scores: list[float] = []
+        for prediction in predictions:
+            if prediction.get("label") != CAT_LABEL:
+                continue
 
-        if cat_prediction is None:
-            raise RuntimeError("Classifier didn't return the cat label")
+            score = prediction.get("score")
+            if isinstance(score, bool) or not isinstance(score, (int, float)):
+                raise RuntimeError("Object detector returned an invalid cat score")
 
-        score = cat_prediction.get("score")
-        if not isinstance(score, (int, float)):
-            raise RuntimeError("Classifier returned an invalid cat score")
+            cat_scores.append(float(score))
 
-        confidence = float(score)
+        confidence = max(cat_scores, default=0.0)
 
         return CatDetectionResult(
             is_cat=confidence >= self.threshold,
