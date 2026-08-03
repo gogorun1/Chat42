@@ -1,5 +1,5 @@
 """
-Run: pytest tests/test_websocket_manager.py -v
+Run: pytest tests/websocket/test_websocket_manager.py -v
 
 These test the ConnectionManager in isolation with a fake WebSocket, so no
 FastAPI app, DB, or real socket is needed — the fastest tier of the pyramid.
@@ -25,11 +25,6 @@ class FakeWebSocket:
         if self.fail_on_send:
             raise ConnectionResetError("simulated dropped connection")
         self.sent.append(payload)
-
-
-@pytest.fixture
-def manager() -> ConnectionManager:
-    return ConnectionManager()
 
 
 @pytest.mark.asyncio
