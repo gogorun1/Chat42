@@ -10,3 +10,5 @@ pyjwt==2.9.0
 email-validator==2.2.0
 httpx==0.27.2
 pillow==12.3.0
+torch==2.13.0
+transformers==5.14.1
