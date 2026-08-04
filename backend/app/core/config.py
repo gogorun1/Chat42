@@ -20,6 +20,9 @@ class Settings(BaseSettings):
 
     frontend_url: str = "https://localhost"
 
+    cat_detection_model: str = "google/owlvit-base-patch32"
+    cat_detection_threshold: float = 0.20
+
 
 @lru_cache
 def get_settings() -> Settings:
