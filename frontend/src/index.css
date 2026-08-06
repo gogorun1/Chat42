@@ -1,1 +1,151 @@
 @import "tailwindcss";
+
+/* ---------- Global ---------- */
+
+html,
+body,
+#root {
+    width: 100%;
+    min-height: 100%;
+}
+
+body {
+    margin: 0;
+    background: #020617;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+::selection {
+    background: #facc15;
+    color: white;
+}
+
+/* ---------- SVG ---------- */
+
+.map-svg {
+    width: 100%;
+    max-width: 900px;
+    image-rendering: pixelated;
+}
+
+/* ---------- Cat ---------- */
+
+.cat-marker {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+}
+
+/* glowing circle */
+
+.cat-glow {
+
+    position: absolute;
+
+    width: 120px;
+    height: 120px;
+
+    border-radius: 9999px;
+
+    left: 50%;
+    top: 50%;
+
+    transform: translate(-50%, -50%);
+
+    background: rgba(250, 204, 21, 0.22);
+
+    box-shadow:
+        0 0 20px rgba(250, 204, 21, .8),
+        0 0 60px rgba(250, 204, 21, .4);
+
+    animation: glowPulse 1.8s ease-in-out infinite alternate;
+}
+
+/* cat */
+
+.cat-icon {
+
+    position: absolute;
+
+    width: 72px;
+
+    left: 50%;
+    top: 50%;
+
+    transform: translate(-50%, -50%);
+
+    z-index: 10;
+
+    opacity: 1;
+
+    image-rendering: pixelated;
+
+    filter:
+        drop-shadow(0 0 12px #facc15)
+        drop-shadow(0 0 22px #facc15);
+
+    animation:
+        catFloat 1.6s ease-in-out infinite alternate;
+}
+
+/* floating */
+
+@keyframes catFloat {
+
+    from {
+
+        transform:
+            translate(-50%, -56%);
+
+    }
+
+    to {
+
+        transform:
+            translate(-50%, -44%);
+
+    }
+
+}
+
+/* glow */
+
+@keyframes glowPulse {
+
+    from {
+
+        transform:
+            translate(-50%, -50%)
+            scale(.85);
+
+        opacity: .45;
+
+    }
+
+    to {
+
+        transform:
+            translate(-50%, -50%)
+            scale(1.18);
+
+        opacity: .9;
+
+    }
+
+}
+
+/* mobile */
+
+@media (max-width: 768px) {
+
+    .cat-icon {
+
+        width: 54px;
+
+    }
+
+}
