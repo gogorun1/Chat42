@@ -29,6 +29,7 @@ services:
       FRONTEND_URL: https://localhost
     volumes:
       - ./backend:/app
+      - uploads_data:/app/uploads
     depends_on:
       postgres:
         condition: service_healthy
@@ -40,6 +41,7 @@ services:
       - "443:443"
     volumes:
       - nginx_certs:/etc/nginx/certs
+      - uploads_data:/var/www/uploads:ro
     depends_on:
       - frontend
       - backend
@@ -62,3 +64,4 @@ volumes:
   pgdata:
   frontend_node_modules:
   nginx_certs:
+  uploads_data:
