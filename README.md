@@ -80,6 +80,8 @@ Currently one table (more will be added as F2/F4/F5/F7/F8/F10 land — this sect
 | Email/password signup & login | Account creation and login with bcrypt-hashed passwords, session via JWT cookie | \<your-login\> (F1) |
 | 42 OAuth login | "Continue with 42" — authorizes via 42, auto-links to an existing account by email or creates a new one | \<your-login\> (F1) |
 | Session persistence & logout | `GET /auth/me` restores login state on page load; logout clears the session cookie | \<your-login\> (F1) |
+| Cat sighting upload | Photo upload with map-zone tagging, validated through cat-detection pipeline | \<your-login\> (F2) |
+| PWA install | Installable web app with offline app shell via service worker | \<your-login\> (F2) |
 | Protected routes | Unauthenticated users are redirected to `/login` | \<your-login\> (F1) |
 | Privacy Policy & Terms of Service pages | Project-specific content, linked from a site-wide footer | \<your-login\> (F1) |
 | HTTPS everywhere | All external traffic terminated at Nginx with TLS; direct HTTP access to frontend/backend containers is not possible | \<your-login\> (F1) |
@@ -100,15 +102,15 @@ Target: 14 mandatory points + up to 5 bonus points (19 total). Status reflects w
 | ORM (SQLAlchemy) | Minor | 1 | ✅ Done | F1 |
 | Advanced search | Minor | 1 | ⬜ Not started | F8 |
 | OAuth 2.0 (42) | Minor | 1 | ✅ Done | F1 |
-| PWA | Minor | 1 | ⬜ Not started | F2 |
+| PWA | Minor | 1 | 🟡 Partial (manifest + service worker; verify install on device) | F2 |
 
 ### Differentiation (5 pts, plus 1 pt buffer)
 
 | Module | Type | Pts | Status | Branch |
 |---|---|---|---|---|
 | LLM system interface (Moulinette persona) | Major | 2 | ⬜ Not started | F9 |
-| File upload | Minor | 1 | ⬜ Not started | F2 |
-| Image recognition (zero-shot cat detection) | Minor | 1 | ⬜ Not started | F2 |
+| File upload | Minor | 1 | ✅ Done | F2 |
+| Image recognition (zero-shot cat detection) | Minor | 1 | 🟡 Partial (interface + stub; wding's model pending) | F2 |
 | Gamification | Minor | 1 | ⬜ Not started | F7 |
 | Notification system *(buffer, only if needed)* | Minor | 1 | ⬜ Not started | F5 |
 
