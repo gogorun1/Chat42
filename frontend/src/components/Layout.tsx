@@ -1,8 +1,23 @@
 import { Link, Outlet } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 
 export function Layout() {
+  const { user } = useAuth()
+
   return (
     <div className="flex min-h-screen flex-col bg-slate-950 text-slate-100">
+      {user && (
+        <header className="border-b border-slate-800 px-6 py-3">
+          <nav className="mx-auto flex max-w-5xl items-center gap-4 text-sm">
+            <Link to="/" className="font-medium hover:text-emerald-400">
+              Chat 42
+            </Link>
+            <Link to="/upload" className="text-slate-400 hover:text-slate-200">
+              Report sighting
+            </Link>
+          </nav>
+        </header>
+      )}
       <main className="flex flex-1 flex-col">
         <Outlet />
       </main>
