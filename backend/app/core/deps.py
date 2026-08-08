@@ -3,18 +3,16 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
+from app.core.constants import ACCESS_TOKEN_COOKIE
 from app.core.database import get_db
 from app.core.security import decode_access_token
 from app.models.user import User
-from app.core.constants import ACCESS_TOKEN_COOKIE
 
-# COOKIE_NAME = "access_token"
 settings = get_settings()
 
 
 def set_auth_cookie(response: Response, token: str) -> None:
     response.set_cookie(
-        # key=COOKIE_NAME,
         key=ACCESS_TOKEN_COOKIE,
         value=token,
         httponly=True,
@@ -26,7 +24,6 @@ def set_auth_cookie(response: Response, token: str) -> None:
 
 
 async def get_current_user(
-    # access_token: str | None = Cookie(default=None, alias=COOKIE_NAME),
     access_token: str | None = Cookie(default=None, alias=ACCESS_TOKEN_COOKIE),
     db: AsyncSession = Depends(get_db),
 ) -> User:
