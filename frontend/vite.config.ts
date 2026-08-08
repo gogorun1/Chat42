@@ -36,6 +36,7 @@ export default defineConfig({
       workbox: {
         navigateFallback: '/index.html',
         globPatterns: ['**/*.{js,css,html,ico,svg,woff2}'],
+        globIgnores: ['**/42-*.svg', '**/cantine-*.svg'],
         runtimeCaching: [
           {
             urlPattern: /\/sightings\//,
