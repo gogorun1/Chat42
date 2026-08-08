@@ -17,3 +17,6 @@ Transcendence.pdf
 
 .DS_Store
 .claude
+
+# Local model experiments (promote reusable tools to backend/scripts/)
+/backend/dev/
