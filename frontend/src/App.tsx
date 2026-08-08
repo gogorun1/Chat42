@@ -6,6 +6,7 @@ import { LoginPage } from './pages/LoginPage'
 import { PrivacyPolicyPage } from './pages/PrivacyPolicyPage'
 import { SignupPage } from './pages/SignupPage'
 import { TermsOfServicePage } from './pages/TermsOfServicePage'
+import { UploadPage } from './pages/UploadPage'
 
 function App() {
   return (
@@ -13,6 +14,7 @@ function App() {
       <Route element={<Layout />}>
         <Route element={<ProtectedRoute />}>
           <Route path="/" element={<HomePage />} />
+          <Route path="/upload" element={<UploadPage />} />
         </Route>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
