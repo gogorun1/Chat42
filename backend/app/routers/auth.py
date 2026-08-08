@@ -2,8 +2,9 @@ from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.constants import ACCESS_TOKEN_COOKIE
 from app.core.database import get_db
-from app.core.deps import COOKIE_NAME, get_current_user, set_auth_cookie
+from app.core.deps import get_current_user, set_auth_cookie
 from app.core.security import create_access_token, hash_password, verify_password
 from app.models.user import User
 from app.schemas.auth import UserCreate, UserLogin, UserRead
@@ -40,7 +41,7 @@ async def login(payload: UserLogin, response: Response, db: AsyncSession = Depen
 
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
 async def logout(response: Response) -> None:
-    response.delete_cookie(COOKIE_NAME, path="/")
+    response.delete_cookie(ACCESS_TOKEN_COOKIE, path="/")
 
 
 @router.get("/me", response_model=UserRead)
