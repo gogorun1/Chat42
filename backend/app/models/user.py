@@ -19,3 +19,7 @@ class User(Base):
     )
 
     sightings: Mapped[list["Sighting"]] = relationship(back_populates="user")
+    notifications: Mapped[list["Notification"]] = relationship(
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
