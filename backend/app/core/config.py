@@ -20,6 +20,8 @@ class Settings(BaseSettings):
 
     frontend_url: str = "https://localhost"
 
+    upload_dir: str = "/app/uploads"
+
 
 @lru_cache
 def get_settings() -> Settings:
