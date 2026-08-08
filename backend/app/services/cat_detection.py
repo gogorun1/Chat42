@@ -64,8 +64,7 @@ class ZeroShotObjectDetector(Protocol):
         image: Image.Image,
         *,
         candidate_labels: list[str],
-    ) -> list[dict[str, object]]:
-        ...
+    ) -> list[dict[str, object]]: ...
 
 
 class ZeroShotCatDetector:

@@ -1,13 +1,12 @@
 from io import BytesIO
 from unittest import TestCase
 
-from PIL import Image
-
 from app.services.cat_detection import (
     InvalidImageError,
     ZeroShotCatDetector,
     decode_image,
 )
+from PIL import Image
 
 
 def make_png(size: tuple[int, int] = (4, 4)) -> bytes:
@@ -79,9 +78,7 @@ class ZeroShotCatDetectorTests(TestCase):
                 {"label": "cat", "score": 0.31, "box": {}},
             ]
         )
-
         result = detector.detect(make_png())
-
         self.assertTrue(result.is_cat)
         self.assertEqual(result.confidence, 0.31)
         self.assertEqual(result.model, "test-model")
@@ -89,9 +86,7 @@ class ZeroShotCatDetectorTests(TestCase):
         self.assertEqual(model.received_labels, ["cat"])
 
     def test_rejects_cat_detection_below_threshold(self) -> None:
-        detector, _ = self.make_detector(
-            [{"label": "cat", "score": 0.19, "box": {}}]
-        )
+        detector, _ = self.make_detector([{"label": "cat", "score": 0.19, "box": {}}])
 
         result = detector.detect(make_png())
 
