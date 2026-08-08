@@ -44,6 +44,9 @@
 | `GET /auth/me` | 拿当前用户信息,未登录返回 401 |
 | `GET /auth/42/login` | 把浏览器带进 42 OAuth 授权流程 |
 | `GET /auth/42/callback` | 42 授权完成后的跳转目标,不用自己调用 |
+| `GET /sightings/zones` | 获取可选 map zone 列表(上传表单用) |
+| `GET /sightings/` | 当前登录用户的目击记录 |
+| `POST /sightings/` | 上传猫照片 + zone_id(`multipart/form-data`) |
 
 ## 前端怎么调接口
 
@@ -60,7 +63,7 @@ await api.post('/some/endpoint', { foo: 'bar' })
 
 ## 加新接口时,别漏了改 Nginx
 
-`nginx.conf` 是显式白名单:只有匹配到的路径(`/health`、`/auth/`、`/docs`、`/redoc`、`/openapi.json`)才会转发给后端,其余一律默认转发给前端开发服务器。**如果你新增了一个后端路由前缀(比如 F8 的搜索/分析接口挂在 `/api/...` 下),记得同步去 `nginx/nginx.conf` 的后端 location 里补上这个前缀**,不然请求会被悄悄转发到前端,页面直接一片空白、连个报错都看不到,排查起来会很懵。
+`nginx.conf` 是显式白名单:只有匹配到的路径(`/health`、`/auth/`、`/sightings/`、`/uploads/`、`/docs`、`/redoc`、`/openapi.json`)才会转发给后端或静态文件服务,其余一律默认转发给前端开发服务器。**如果你新增了一个后端路由前缀(比如 F8 的搜索/分析接口挂在 `/api/...` 下),记得同步去 `nginx/nginx.conf` 的后端 location 里补上这个前缀**,不然请求会被悄悄转发到前端,页面直接一片空白、连个报错都看不到,排查起来会很懵。
 
 ## 数据库怎么访问(后端)
 

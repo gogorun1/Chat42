@@ -1,4 +1,4 @@
-export const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
+export const API_BASE_URL = import.meta.env.VITE_API_URL ?? ''
 
 export class ApiError extends Error {
   status: number
@@ -10,20 +10,23 @@ export class ApiError extends Error {
 }
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
+  const headers = new Headers(options.headers)
+  const isFormData = options.body instanceof FormData
+  if (!isFormData && !headers.has('Content-Type')) {
+    headers.set('Content-Type', 'application/json')
+  }
+
   const res = await fetch(`${API_BASE_URL}${path}`, {
     ...options,
     credentials: 'include',
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
+    headers,
   })
 
   if (!res.ok) {
     let detail = res.statusText
     try {
       const body = await res.json()
-      detail = body.detail ?? detail
+      detail = typeof body.detail === 'string' ? body.detail : JSON.stringify(body.detail)
     } catch {
       // response had no JSON body; fall back to statusText
     }
@@ -38,4 +41,20 @@ export const api = {
   get: <T>(path: string) => request<T>(path),
   post: <T>(path: string, body?: unknown) =>
     request<T>(path, { method: 'POST', body: body !== undefined ? JSON.stringify(body) : undefined }),
+  postForm: <T>(path: string, formData: FormData) =>
+    request<T>(path, { method: 'POST', body: formData }),
+}
+
+export type Zone = {
+  id: number
+  slug: string
+  name: string
+}
+
+export type Sighting = {
+  id: number
+  zone_id: number
+  image_url: string
+  created_at: string
+  zone: Zone
 }
