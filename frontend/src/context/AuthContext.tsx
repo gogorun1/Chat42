@@ -1,5 +1,9 @@
 /*DEV*/
-import {
+/* for someone who want to see the website before the realization of f10 */
+/* you can use this dev mode */
+/* you need also put "VITE_DEV_MODE=true" in .env in fronted */
+
+/*import {
   createContext,
   useContext,
   useEffect,
@@ -272,9 +276,11 @@ export function useAuth(){
 
   return ctx;
 
-}
+}*/
 
-/* True one
+
+/*the real version with auth 42*/
+
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
 import { api } from '../lib/api'
 
@@ -293,7 +299,6 @@ interface AuthContextValue {
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined)
-
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
@@ -330,4 +335,3 @@ export function useAuth(): AuthContextValue {
   if (!ctx) throw new Error('useAuth must be used within an AuthProvider')
   return ctx
 }
- */
