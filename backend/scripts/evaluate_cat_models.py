@@ -5,14 +5,13 @@ from time import perf_counter
 from transformers import pipeline
 
 IMAGES = {
-    "cats": (
-        "http://images.cocodataset.org/"
-        "val2017/000000039769.jpg"
-    ),
+    "cats": ("http://images.cocodataset.org/val2017/000000039769.jpg"),
     "parrots": (
         "https://huggingface.co/datasets/huggingface/"
         "documentation-images/resolve/main/hub/parrots.png"
     ),
+    "dogs": ("http://images.cocodataset.org/val2017/000000482917.jpg"),
+    "cat_and_dog": ("http://images.cocodataset.org/val2017/000000401991.jpg"),
 }
 
 CONFIGS = {
