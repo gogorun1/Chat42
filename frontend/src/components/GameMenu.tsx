@@ -1,157 +1,70 @@
-import type { Dispatch, SetStateAction } from "react";
-
-
 interface GameMenuProps {
-
-    page: string;
-
-    setPage: Dispatch<SetStateAction<string>>;
-
+  page: string;
+  setPage: (page: string) => void;
 }
 
-
-
-export default function GameMenu(
-{
-    page,
-    setPage
-
-}: GameMenuProps
-){
-
-
-const menu = [
-
+export default function GameMenu({
+  page,
+  setPage,
+}: GameMenuProps) {
+  const buttons = [
     {
-        id:"map",
-        icon:"🗺",
-        name:"Map"
+      id: "map",
+      label: "Map",
+      icon: "🗺",
     },
-
     {
-        id:"history",
-        icon:"🐾",
-        name:"History"
+      id: "history",
+      label: "History",
+      icon: "🐾",
     },
-
     {
-        id:"heat",
-        icon:"🔥",
-        name:"Heat"
+      id: "heat",
+      label: "Heat Map",
+      icon: "🔥",
     },
-
     {
-        id:"diary",
-        icon:"📖",
-        name:"Diary"
+      id: "diary",
+      label: "Diary",
+      icon: "📖",
     },
-
     {
-        id:"guess",
-        icon:"🎯",
-        name:"Guess"
+      id: "ranking",
+      label: "Ranking",
+      icon: "🏆",
     },
-
     {
-        id:"ranking",
-        icon:"🏆",
-        name:"Ranking"
-    }
+      id: "report",
+      label: "Report",
+      icon: "➕",
+    },
+  ];
 
-];
+  return (
+    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-slate-800 bg-slate-950/95 px-4 py-3 backdrop-blur">
 
+      <div className="mx-auto flex max-w-5xl justify-center gap-2 overflow-x-auto">
 
+        {buttons.map((button) => (
+          <button
+            key={button.id}
+            onClick={() => setPage(button.id)}
+            className={`min-w-[80px] rounded-xl px-3 py-2 text-center text-xs transition ${
+              page === button.id
+                ? "bg-amber-400 font-bold text-slate-950"
+                : "bg-slate-800 text-slate-300 hover:bg-slate-700"
+            }`}
+          >
+            <div className="text-lg">
+              {button.icon}
+            </div>
 
-return (
+            {button.label}
+          </button>
+        ))}
 
-<div
-className="
-fixed
-bottom-0
-left-0
-right-0
-bg-slate-950
-border-t
-border-yellow-400
-p-3
-"
->
+      </div>
 
-
-<div
-className="
-flex
-justify-center
-gap-3
-flex-wrap
-"
->
-
-
-{
-menu.map(item=>(
-
-
-<button
-
-key={item.id}
-
-onClick={()=>setPage(item.id)}
-
-className={`
-px-4
-py-2
-rounded-lg
-border
-font-mono
-transition
-
-${
-page===item.id
-
-?
-
-"bg-yellow-400 text-black"
-
-:
-
-"bg-slate-800 text-white hover:bg-slate-700"
-
-}
-
-`}
-
->
-
-
-<div className="text-xl">
-
-{item.icon}
-
-</div>
-
-
-<div className="text-xs">
-
-{item.name}
-
-</div>
-
-
-</button>
-
-
-))
-}
-
-
-</div>
-
-
-</div>
-
-
-);
-
-
+    </nav>
+  );
 }
