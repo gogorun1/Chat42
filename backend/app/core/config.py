@@ -21,6 +21,8 @@ class Settings(BaseSettings):
     frontend_url: str = "https://localhost"
 
     upload_dir: str = "/app/uploads"
+    cat_detection_model: str = "google/owlvit-base-patch32"
+    cat_detection_threshold: float = 0.15
 
 
 @lru_cache
