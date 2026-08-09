@@ -20,7 +20,7 @@ import { sightings } from "../data/sighting";
 
 import GameMenu from "./GameMenu";
 
-const zones: any = {
+export  const zones: any = {
   entrance: {
     id: "entrance",
     name: "42 Entrance",
