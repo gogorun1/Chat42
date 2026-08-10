@@ -1,14 +1,17 @@
 import { useState } from "react";
 
-import building42 from "../assets/maps/42.svg";
-import cantineM1 from "../assets/maps/cantine.svg";
-import cantine0 from "../assets/maps/cantine.svg";
+import building42 from "../assets/maps/building.svg";
+import cantineM1 from "../assets/maps/cantine_m1.svg";
+import cantine0 from "../assets/maps/cantine_0.svg";
+import cantine1 from "../assets/maps/cantine_1.svg";
 import f0 from "../assets/maps/f0.svg";
 import f1 from "../assets/maps/f1.svg";
+import f1b from "../assets/maps/f1b.svg";
 import f2 from "../assets/maps/f2.svg";
 import f6 from "../assets/maps/f6.svg";
-import play from "../assets/maps/play.svg";
-import roof from "../assets/maps/roof.svg";
+import play from "../assets/maps/playroom.svg";
+import roof2 from "../assets/maps/terrase_2.svg";
+import roof3 from "../assets/maps/terrase_3.svg";
 import stairs from "../assets/maps/stairs.svg";
 import cat from "../assets/maps/cat.svg";
 
@@ -17,7 +20,7 @@ import { sightings } from "../data/sighting";
 
 import GameMenu from "./GameMenu";
 
-const zones: any = {
+export  const zones: any = {
   entrance: {
     id: "entrance",
     name: "42 Entrance",
@@ -43,7 +46,7 @@ const zones: any = {
     id: "cantine_1",
     name: "La Piscine",
     floor: "0",
-    image: cantine0,
+    image: cantine1,
   },
 
   f0: {
@@ -64,7 +67,7 @@ const zones: any = {
     id: "f1b",
     name: "F1b",
     floor: "2",
-    image: f1,
+    image: f1b,
   },
 
   f2: {
@@ -92,14 +95,14 @@ const zones: any = {
     id: "roof2",
     name: "Terrase (2)",
     floor: "2",
-    image: roof,
+    image: roof2,
   },
 
   roof3: {
     id: "roof3",
     name: "Terrase (3)",
     floor: "3",
-    image: roof,
+    image: roof3,
   },
 
   stairs: {

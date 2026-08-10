@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, s
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
+from starlette.concurrency import run_in_threadpool
 
 from app.core.config import get_settings
 from app.core.database import get_db
@@ -13,9 +14,9 @@ from app.models.user import User
 from app.models.zone import Zone
 from app.schemas.sighting import SightingRead, ZoneRead
 from app.services.cat_detection import InvalidImageError
+from app.services.cat_detector_factory import get_cat_detector
 from app.services.notification_service import broadcast_sighting
 from app.services.storage import save_upload
-from app.services.stub_cat_detector import get_cat_detector
 
 router = APIRouter(prefix="/sightings", tags=["sightings"])
 settings = get_settings()
@@ -55,13 +56,16 @@ async def create_sighting(
 
     content_type = image.content_type or ""
     if content_type not in {"image/jpeg", "image/png", "image/webp", "image/gif"}:
-        raise HTTPException(status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, "Only JPEG, PNG, WebP, and GIF images are allowed")
+        raise HTTPException(
+            status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+            "Only JPEG, PNG, WebP, and GIF images are allowed",
+        )
 
     content = await image.read()
-    detector = get_cat_detector()
+    detector = await run_in_threadpool(get_cat_detector)
 
     try:
-        detection = detector.detect(content)
+        detection = await run_in_threadpool(detector.detect, content)
     except InvalidImageError as exc:
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, str(exc)) from exc
 
