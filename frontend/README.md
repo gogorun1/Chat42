@@ -48,3 +48,15 @@ export default tseslint.config({
   },
 })
 ```
+
+Zones' definition:
+```
+{
+    id:
+    name: 
+    floor: 
+    image: 
+  },
+```
+
+details in src/components/42maps.tsx
