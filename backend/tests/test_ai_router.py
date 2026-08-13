@@ -11,7 +11,7 @@ from app.main import app as main_app
 from app.routers.ai import router
 from app.services.llm_client import FakeLLMClient
 from app.services.llm_client_factory import get_llm_client
-from app.services.sighting_context import SightingContext, ZoneCount
+from app.models.diary_entry import DiaryEntry
 
 
 async def fake_db():
@@ -34,17 +34,15 @@ def create_client(llm: FakeLLMClient, *, authenticated: bool = True) -> TestClie
 
 def test_get_diary_returns_grounded_entry() -> None:
     llm = FakeLLMClient(response="I inspected the Garden today.")
-    context = SightingContext(
-        date="2026-08-13",
-        total_sightings=2,
-        zones=[ZoneCount(name="Garden", count=2)],
-        hours=[10],
+    entry = DiaryEntry(
+        date=date(2026, 8, 13),
+        content="I inspected the Garden today.",
     )
 
     with patch(
-        "app.routers.ai.build_daily_context",
-        new=AsyncMock(return_value=context),
-    ) as build_context:
+        "app.routers.ai.get_or_create_diary",
+        new=AsyncMock(return_value=entry),
+    ) as get_diary:
         response = create_client(llm).get("/ai/diary?date=2026-08-13")
 
     assert response.status_code == 200
@@ -52,7 +50,7 @@ def test_get_diary_returns_grounded_entry() -> None:
         "date": "2026-08-13",
         "content": "I inspected the Garden today.",
     }
-    build_context.assert_awaited_once_with("test-db", date(2026, 8, 13))
+    get_diary.assert_awaited_once_with("test-db", date(2026, 8, 13), llm)
 
 
 def test_get_diary_rejects_invalid_date() -> None:
