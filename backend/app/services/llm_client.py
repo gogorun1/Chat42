@@ -14,13 +14,17 @@ class FakeLLMClient:
         self,
         response: str = "",
         chunks: list[str] | None = None,
+        error: Exception | None = None,
     ) -> None:
         self.response = response
         self.chunks = chunks or []
+        self.error = error
         self.prompts: list[str] = []
 
     async def generate(self, prompt: str) -> str:
         self.prompts.append(prompt)
+        if self.error:
+            raise self.error
         return self.response
 
     async def stream(self, prompt: str) -> AsyncIterator[str]:
