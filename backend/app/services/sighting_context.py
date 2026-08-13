@@ -1,5 +1,6 @@
 from dataclasses import asdict, dataclass, field
 from datetime import date, datetime, time, timedelta, timezone
+from zoneinfo import ZoneInfo
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -28,8 +29,11 @@ class SightingContext:
 
 # core function for llm to create mollinette diary
 async def build_daily_context(db: AsyncSession, day: date) -> SightingContext:
-    start = datetime.combine(day, time.min, tzinfo=timezone.utc)
-    end = start + timedelta(days=1)
+    campus_timezone = ZoneInfo("Europe/Paris")
+    local_start = datetime.combine(day, time.min, tzinfo=campus_timezone)
+    local_end = local_start + timedelta(days=1)
+    start = local_start.astimezone(timezone.utc)
+    end = local_end.astimezone(timezone.utc)
 
     zone_result = await db.execute(
         select(Zone.name, func.count(Sighting.id))

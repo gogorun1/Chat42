@@ -15,10 +15,12 @@ class FakeLLMClient:
         response: str = "",
         chunks: list[str] | None = None,
         error: Exception | None = None,
+        stream_error: Exception | None = None,
     ) -> None:
         self.response = response
         self.chunks = chunks or []
         self.error = error
+        self.stream_error = stream_error
         self.prompts: list[str] = []
 
     async def generate(self, prompt: str) -> str:
@@ -31,3 +33,5 @@ class FakeLLMClient:
         self.prompts.append(prompt)
         for chunk in self.chunks:
             yield chunk
+        if self.stream_error:
+            raise self.stream_error
