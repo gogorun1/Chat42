@@ -27,6 +27,8 @@ services:
       FT_CLIENT_SECRET: ${FT_CLIENT_SECRET}
       FT_REDIRECT_URI: ${FT_REDIRECT_URI}
       FRONTEND_URL: https://localhost
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-3.5-flash}
     volumes:
       - ./backend:/app
       - uploads_data:/app/uploads
