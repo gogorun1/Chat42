@@ -14,13 +14,15 @@ class DailyTrendOut(BaseModel):
 
 class TopReporterOut(BaseModel):
     user_id: int
-    email: str
+    email: str #change to username when we add usernames
     count: int
 
 
 class AnalyticsSummaryOut(BaseModel):
     total_sightings: int
-    window_days: int
+    period_sightings: int
+    window_start: str
+    window_end: str | None 
     zone_activity: list[ZoneActivityOut]
     daily_trend: list[DailyTrendOut]
     top_reporters: list[TopReporterOut]
