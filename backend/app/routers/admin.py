@@ -136,8 +136,11 @@ async def update_user_role(
     user_id: int,
     payload: UserRoleUpdate,
     db: AsyncSession = Depends(get_db),
-    _: User = Depends(admin_only),
+    current_user: User = Depends(admin_only),
 ) -> User:
+    if user_id == current_user.id and payload.role != UserRole.ADMIN:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Cannot change your own role")
+
     user = await db.get(User, user_id)
     if user is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "User not found")
