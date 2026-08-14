@@ -322,3 +322,12 @@ async def test_change_role_of_missing_user_returns_404(admin_app, admin_client, 
     response = admin_client.patch("/admin/users/999/role", json={"role": "moderator"})
 
     assert response.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_admin_cannot_demote_self(admin_app, admin_client, db_session):
+    admin = await _login_as(admin_app, db_session, UserRole.ADMIN)
+
+    response = admin_client.patch(f"/admin/users/{admin.id}/role", json={"role": "moderator"})
+
+    assert response.status_code == 400
