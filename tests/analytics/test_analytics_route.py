@@ -14,7 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 from app.core.database import Base, get_db
 from app.core.deps import get_current_user
 from app.models.sighting import Sighting
-from app.models.user import User
+from app.models.user import User, UserRole
 from app.models.zone import Zone
 from app.routers.analytics import router
 
@@ -38,7 +38,7 @@ async def db_session():
 
 @pytest_asyncio.fixture
 async def seeded(db_session: AsyncSession):
-    alice = User(email="alice@example.com")
+    alice = User(email="alice@example.com", role=UserRole.MODERATOR)
     bob = User(email="bob@example.com")
     zone_a = Zone(slug="campus-a", name="Campus A")
     zone_b = Zone(slug="campus-b", name="Campus B")

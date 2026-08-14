@@ -24,6 +24,9 @@ class Settings(BaseSettings):
     cat_detection_model: str = "google/owlvit-base-patch32"
     cat_detection_threshold: float = 0.15
 
+    gemini_api_key: str = ""
+    gemini_model: str = "gemini-3.5-flash"
+
 
 @lru_cache
 def get_settings() -> Settings:

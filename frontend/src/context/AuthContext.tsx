@@ -284,10 +284,13 @@ export function useAuth(){
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
 import { api } from '../lib/api'
 
+export type UserRole = 'user' | 'moderator' | 'admin'
+
 export interface User {
   id: number
   email: string
   ft_login: string | null
+  role: UserRole
 }
 
 interface AuthContextValue {
