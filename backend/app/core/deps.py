@@ -6,7 +6,7 @@ from app.core.config import get_settings
 from app.core.constants import ACCESS_TOKEN_COOKIE
 from app.core.database import get_db
 from app.core.security import decode_access_token
-from app.models.user import User
+from app.models.user import User, UserRole
 
 settings = get_settings()
 
@@ -42,3 +42,12 @@ async def get_current_user(
         raise unauthorized
 
     return user
+
+
+def require_role(*allowed: UserRole):
+    async def checker(user: User = Depends(get_current_user)) -> User:
+        if user.role not in allowed:
+            raise HTTPException(status.HTTP_403_FORBIDDEN, "Insufficient permissions")
+        return user
+
+    return checker
