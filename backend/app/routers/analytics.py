@@ -7,9 +7,9 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.core.deps import get_current_user
+from app.core.deps import require_role
 from app.models.sighting import Sighting
-from app.models.user import User
+from app.models.user import User, UserRole
 from app.models.zone import Zone
 from app.schemas.analytics import (
     AnalyticsSummaryOut,
@@ -20,6 +20,8 @@ from app.schemas.analytics import (
 
 router = APIRouter(prefix="/analytics", tags=["analytics"])
 
+moderator_or_admin = require_role(UserRole.MODERATOR, UserRole.ADMIN)
+
 
 @router.get("/summary", response_model=AnalyticsSummaryOut)
 async def analytics_summary(
@@ -28,7 +30,7 @@ async def analytics_summary(
     date_to: datetime | None = Query(default=None),
     zone_id: int | None = Query(default=None),
     reporter_limit: int = Query(default=10, ge=1, le=100),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(moderator_or_admin),
     db: AsyncSession = Depends(get_db),
 ) -> AnalyticsSummaryOut:
     if date_from is not None and date_to is not None and date_from > date_to:
