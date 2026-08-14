@@ -15,6 +15,11 @@ export function Layout() {
             <Link to="/upload" className="text-slate-400 hover:text-slate-200">
               Report sighting
             </Link>
+            {(user.role === 'moderator' || user.role === 'admin') && (
+              <Link to="/admin" className="text-slate-400 hover:text-slate-200">
+                Admin
+              </Link>
+            )}
           </nav>
         </header>
       )}
