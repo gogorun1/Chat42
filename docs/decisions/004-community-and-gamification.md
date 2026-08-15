@@ -146,17 +146,22 @@ DB 里没有任何 `sightings` 引用旧 zone,唯一一条测试用的 `predicti
   标现在判定的是"最新一条真实目击",不再是写死的 `cantine_m1`/`test6`/
   `7:42`。数据库里还没有真实 sighting 时会 fallback 回原来的 mock,不会
   报错。
-- `handleGuess` 的即时判分逻辑(花1分猜、猜中给3分、`points` 状态)**完全
-  没动**,只是换了判定依据的数据源。
-- **`points` 还是纯前端 state,刷新页面就归零,不落库、不跟用户账号绑定**——
-  这个事实没有因为接了真实"last seen"而改变,只是判定用的数据变真实了,
-  "分数"本身还是假的。这跟排行榜(`/gamification/leaderboard`,算的是
-  `目击数 + 竞猜正确数×10`)完全是两套不相关的分数,首页显示的"⭐ 120
-  pts"跟 Gamification 页的排行榜分数不会对上。
+- `handleGuess` 的即时判分逻辑(花1分猜、猜中给3分)**保持不变**,只是换了
+  判定依据的数据源。
 - 我这边之前做的 `/gamification/predictions`(猜明天、懒结算)现在**没有
   被这次决定的 Guess UI 使用**——两边不是同一个游戏。是留着(可能以后有别
   的用途,比如做一个独立的"每日竞猜"功能),还是干脆砍掉,这个还没定,不
   在这次改动范围内,先不动它。
+
+**"points 不落库"这个问题已解决(2026-08-15)**:新增 `users.guess_points`
+字段(migration `a7b8c9d0e1f2_add_guess_points_to_users.py`,起始值 **5**,
+不是 F4 原本 mock 的 120)+ `POST /gamification/guess` 端点——服务端拿
+"最新一条真实目击"当标准答案判定对错、真实扣/加分并落库,不再是前端本地
+算分。`GET /gamification/leaderboard` 的 `score` 现在是
+`目击数 + 竞猜正确数×10 + guess_points`,首页"⭐ pts"/"🏆 Rank"也换成了
+真实查排行榜取自己那一条,不再是硬编码的"120 pts"/"Rank #12"——两处现在
+显示的是同一个数字。`handleGuess` 的判分文案/交互没变,只是从"本地
+`setPoints`"换成了"调用后端、拿返回值刷新 `useAuth()` 的 `user`"。
 
 ## 不做的部分
 
