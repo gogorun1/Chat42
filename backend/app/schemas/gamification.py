@@ -16,6 +16,7 @@ class LeaderboardEntry(BaseModel):
     avatar_url: str | None
     sighting_count: int
     correct_predictions: int
+    guess_points: int
     score: int
 
 
@@ -31,3 +32,13 @@ class PredictionRead(BaseModel):
     target_date: date
     is_correct: bool | None
     created_at: datetime
+
+
+class GuessCreate(BaseModel):
+    zone_id: int
+
+
+class GuessResult(BaseModel):
+    correct: bool
+    guess_points: int
+    actual_zone_id: int

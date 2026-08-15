@@ -10,7 +10,14 @@ from app.models.gamification import Prediction, UserBadge
 from app.models.sighting import Sighting
 from app.models.user import User
 from app.models.zone import Zone
-from app.schemas.gamification import BadgeRead, LeaderboardEntry, PredictionCreate, PredictionRead
+from app.schemas.gamification import (
+    BadgeRead,
+    GuessCreate,
+    GuessResult,
+    LeaderboardEntry,
+    PredictionCreate,
+    PredictionRead,
+)
 from app.services.gamification_service import BADGE_RULES, settle_pending_predictions
 
 router = APIRouter(prefix="/gamification", tags=["gamification"])
@@ -68,12 +75,38 @@ async def leaderboard(
             avatar_url=user.avatar_url,
             sighting_count=sighting_counts.get(user.id, 0),
             correct_predictions=correct_counts.get(user.id, 0),
-            score=sighting_counts.get(user.id, 0) + correct_counts.get(user.id, 0) * 10,
+            guess_points=user.guess_points,
+            score=sighting_counts.get(user.id, 0) + correct_counts.get(user.id, 0) * 10 + user.guess_points,
         )
         for user in users
     ]
     entries.sort(key=lambda entry: entry.score, reverse=True)
     return entries[offset : offset + limit]
+
+
+@router.post("/guess", response_model=GuessResult)
+async def submit_guess(
+    payload: GuessCreate,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> GuessResult:
+    if current_user.guess_points < 1:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Not enough points")
+
+    latest = (
+        await db.execute(select(Sighting).order_by(Sighting.created_at.desc()).limit(1))
+    ).scalar_one_or_none()
+    if latest is None:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "No sightings yet to guess against")
+
+    correct = payload.zone_id == latest.zone_id
+    current_user.guess_points -= 1
+    if correct:
+        current_user.guess_points += 3
+    await db.commit()
+    await db.refresh(current_user)
+
+    return GuessResult(correct=correct, guess_points=current_user.guess_points, actual_zone_id=latest.zone_id)
 
 
 @router.post("/predictions", response_model=PredictionRead, status_code=status.HTTP_201_CREATED)
