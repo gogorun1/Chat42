@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import get_settings
-from app.routers import admin, ai, auth, health, notifications, oauth, sightings, websocket, search, analytics
+from app.routers import admin, ai, auth, health, notifications, oauth, sightings, websocket, search, analytics, users
 
 settings = get_settings()
 
@@ -26,3 +26,4 @@ app.include_router(websocket.router)
 app.include_router(search.router)
 app.include_router(analytics.router)
 app.include_router(admin.router)
+app.include_router(users.router)

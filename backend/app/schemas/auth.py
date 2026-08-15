@@ -20,3 +20,5 @@ class UserRead(BaseModel):
     email: str
     ft_login: str | None
     role: UserRole
+    display_name: str | None
+    avatar_url: str | None
