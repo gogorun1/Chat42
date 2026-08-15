@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import { api, ApiError, Zone } from "../lib/api";
+import { api, ApiError, SearchSighting, SightingSearchResult, Zone } from "../lib/api";
 
 import building42 from "../assets/maps/building.svg";
 import cantineM1 from "../assets/maps/cantine_m1.svg";
@@ -18,7 +18,6 @@ import stairs from "../assets/maps/stairs.svg";
 import cat from "../assets/maps/cat.svg";
 
 import { lastSighting } from "../data/cat";
-import { sightings } from "../data/sighting";
 
 import GameMenu from "./GameMenu";
 
@@ -133,12 +132,21 @@ export default function CampusMap() {
   const [reportMessage, setReportMessage] = useState("");
   const [reportSubmitting, setReportSubmitting] = useState(false);
   const [backendZones, setBackendZones] = useState<Zone[]>([]);
+  const [campusSightings, setCampusSightings] = useState<SearchSighting[]>([]);
+
+  function loadCampusSightings() {
+    api
+      .get<SightingSearchResult>("/search/sightings?page_size=100")
+      .then((result) => setCampusSightings(result.items))
+      .catch(() => undefined);
+  }
 
   useEffect(() => {
     api
       .get<Zone[]>("/sightings/zones")
       .then(setBackendZones)
       .catch(() => undefined);
+    loadCampusSightings();
   }, []);
 
   const currentZone = zones[selectedZone];
@@ -149,8 +157,9 @@ export default function CampusMap() {
 
   const heat: any = {};
 
-  sightings.forEach((s) => {
-    heat[s.zone] = (heat[s.zone] || 0) + 1;
+  campusSightings.forEach((s) => {
+    const slug = backendZones.find((zone) => zone.id === s.zone_id)?.slug;
+    if (slug) heat[slug] = (heat[slug] || 0) + 1;
   });
 
   // ---------------------------------------------------------
@@ -228,6 +237,7 @@ function handleGuess() {
       setReportMessage(
         "🐱 Thank you! Your Moulinette sighting has been reported."
       );
+      loadCampusSightings();
       setReportZone("");
       setReportPhoto(null);
     } catch (err) {
@@ -592,22 +602,26 @@ function handleGuess() {
             🐾 Cat History
           </h1>
 
-          {sightings.map((s, index) => (
+          {campusSightings.map((s) => (
             <div
-              key={index}
+              key={s.id}
               className="mb-3 rounded-xl bg-slate-900 p-4"
             >
-              🐾 {zones[s.zone]?.name || s.zone}
+              🐾 {s.zone_name}
 
               <br />
 
-              👤 {s.reporter}
+              👤 {s.reporter_email}
 
               <br />
 
-              ⏰ {s.time}
+              ⏰ {new Date(s.created_at).toLocaleString()}
             </div>
           ))}
+
+          {campusSightings.length === 0 && (
+            <p className="text-slate-500">No sightings reported yet.</p>
+          )}
 
         </div>
       )}
