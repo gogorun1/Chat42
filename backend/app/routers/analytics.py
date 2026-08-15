@@ -5,22 +5,22 @@ from datetime import datetime, timedelta, timezone
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.core.database import get_db
-from app.core.deps import require_role
+from app.core.deps import get_current_user
 from app.models.sighting import Sighting
-from app.models.user import User, UserRole
+from app.models.user import User
 from app.models.zone import Zone
 from app.schemas.analytics import (
     AnalyticsSummaryOut,
     DailyTrendOut,
     TopReporterOut,
     ZoneActivityOut,
+    RecentSightingOut
 )
 
-router = APIRouter(prefix="/analytics", tags=["analytics"])
-
-moderator_or_admin = require_role(UserRole.MODERATOR, UserRole.ADMIN)
+router = APIRouter(prefix="/api/analytics", tags=["analytics"])
 
 
 @router.get("/summary", response_model=AnalyticsSummaryOut)
@@ -30,7 +30,7 @@ async def analytics_summary(
     date_to: datetime | None = Query(default=None),
     zone_id: int | None = Query(default=None),
     reporter_limit: int = Query(default=10, ge=1, le=100),
-    current_user: User = Depends(moderator_or_admin),
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> AnalyticsSummaryOut:
     if date_from is not None and date_to is not None and date_from > date_to:
@@ -113,6 +113,31 @@ async def analytics_summary(
         for uid, email, count in reporter_rows
     ]
 
+    recent_stmt = (
+        apply_filters(
+            select(Sighting)
+            .options(
+                selectinload(Sighting.zone),
+                selectinload(Sighting.user),
+            )
+        )
+        .order_by(Sighting.created_at.desc())
+        .limit(10)
+    )
+
+    recent_rows = (await db.scalars(recent_stmt)).unique().all()
+
+    recent_sightings = [
+        RecentSightingOut(
+            id=s.id,
+            zone_id=s.zone_id,
+            zone_name=s.zone.name,
+            reporter=s.user.display_name or s.user.email.split("@")[0],
+            image_url=f"/uploads/{s.image_path}",
+            created_at=s.created_at,
+        )
+        for s in recent_rows
+    ]
     return AnalyticsSummaryOut(
         total_sightings=total_sightings,
         period_sightings=period_sightings,
@@ -125,4 +150,5 @@ async def analytics_summary(
         zone_activity=zone_activity,
         daily_trend=daily_trend,
         top_reporters=top_reporters,
+        recent_sightings=recent_sightings
     )
