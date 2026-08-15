@@ -1,6 +1,6 @@
 # ADR 004: 社区与激励(F7)
 
-- 状态:部分实现(徽章数据模型 + 判定逻辑已完成,排行榜/竞猜端点待做)
+- 状态:后端已实现(徽章、排行榜、竞猜端点全部完成并测试通过);前端待做
 - 日期:2026-08-15
 
 ## 背景
@@ -143,9 +143,14 @@ class Prediction(Base):
    (`backend/app/services/gamification_service.py`,6 条单测全过,见
    `backend/tests/test_gamification_service.py`)。当前规则:首次目击、
    累计5/10/50次、集齐所有zone、连续7天打卡。
-3. `GET /gamification/achievements`、`GET /gamification/leaderboard`。
-4. `POST /gamification/predictions` + 懒结算逻辑 +
-   `GET /gamification/predictions/me`。
-5. `nginx.conf` 加转发;后端测试(`test_gamification_router.py`)。
-6. 前端:徽章/排行榜页 + 竞猜卡片 + Profile 页"我的目击历史"区块。
+3. ~~`GET /gamification/achievements`、`GET /gamification/leaderboard`。~~
+   **已完成**。排行榜排序用 `目击数 + 竞猜正确数×10`,没有落 `points` 字段。
+4. ~~`POST /gamification/predictions` + 懒结算逻辑 +
+   `GET /gamification/predictions/me`。~~ **已完成**
+   (`backend/app/services/gamification_service.py::settle_pending_predictions`)。
+5. ~~`nginx.conf` 加转发;后端测试(`test_gamification_router.py`)。~~
+   **已完成**,7 条端点测试全过;另外手动 curl 走了一遍完整 HTTPS 链路
+   (signup → 提交竞猜 → 重复提交 409 → 查询列表 → 查排行榜/成就)。
+6. 前端:徽章/排行榜页 + 竞猜卡片 + Profile 页"我的目击历史"区块。**待做**。
 7. 浏览器手动验证:攒够条件解锁徽章、排行榜排序正确、提交竞猜次日结算。
+   **待做**(依赖第 6 步的前端页面)。
