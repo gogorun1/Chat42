@@ -12,12 +12,12 @@ from.
 """
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, datetime, timedelta, timezone
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.gamification import UserBadge
+from app.models.gamification import Prediction, UserBadge
 from app.models.sighting import Sighting
 from app.models.user import User
 from app.models.zone import Zone
@@ -80,3 +80,49 @@ async def check_and_award_badges(db: AsyncSession, user: User) -> list[str]:
         await db.commit()
 
     return new_codes
+
+
+async def settle_pending_predictions(db: AsyncSession) -> None:
+    """
+    Lazy settlement: there's no cron/scheduler in the deploy stack, so instead
+    of resolving "yesterday's" guesses on a timer, we resolve them the next
+    time anyone asks for predictions or the leaderboard. A day's winner is
+    whichever zone had the most sightings on `target_date` (UTC calendar
+    day); ties count as correct for every tied zone. A day with zero
+    sightings is left unresolved (`is_correct` stays None) rather than
+    penalizing everyone who guessed.
+    """
+    today = date.today()
+    pending = (
+        (
+            await db.execute(
+                select(Prediction).where(Prediction.target_date < today, Prediction.is_correct.is_(None))
+            )
+        )
+        .scalars()
+        .all()
+    )
+    if not pending:
+        return
+
+    for target_date in {p.target_date for p in pending}:
+        start = datetime.combine(target_date, datetime.min.time(), tzinfo=timezone.utc)
+        end = start + timedelta(days=1)
+        counts = (
+            await db.execute(
+                select(Sighting.zone_id, func.count(Sighting.id))
+                .where(Sighting.created_at >= start, Sighting.created_at < end)
+                .group_by(Sighting.zone_id)
+            )
+        ).all()
+        if not counts:
+            continue
+
+        max_count = max(count for _, count in counts)
+        winning_zones = {zone_id for zone_id, count in counts if count == max_count}
+
+        for prediction in pending:
+            if prediction.target_date == target_date:
+                prediction.is_correct = prediction.zone_id in winning_zones
+
+    await db.commit()
