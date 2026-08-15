@@ -61,3 +61,95 @@ export type Sighting = {
   created_at: string
   zone: Zone
 }
+
+export type SightingSearchItem = {
+  id: number
+  zone_id: number
+  zone_name: string
+  reporter_id: number
+  reporter_email: string
+  image_url: string
+  created_at: string
+}
+ 
+export type SightingSearchResult = {
+  items: SightingSearchItem[]
+  total: number
+  page: number
+  page_size: number
+}
+ 
+export type SightingSearchParams = {
+  zone_id?: number
+  user_id?: number
+  date_from?: string // ISO datetime
+  date_to?: string
+  sort_by?: 'created_at' | 'zone'
+  sort_order?: 'asc' | 'desc'
+  page?: number
+  page_size?: number
+}
+ 
+export type ZoneActivity = {
+  zone_id: number
+  zone_name: string
+  count: number
+}
+ 
+export type DailyTrend = {
+  date: string // "YYYY-MM-DD"
+  count: number
+}
+ 
+export type TopReporter = {
+  user_id: number
+  email: string
+  count: number
+}
+
+export type RecentSighting = {
+  id: number
+  zone_id: number
+  zone_name: string
+  reporter: string
+  image_url: string
+  created_at: string
+}
+ 
+export type AnalyticsSummary = {
+  total_sightings: number
+  window_days: number
+  zone_activity: ZoneActivity[]
+  daily_trend: DailyTrend[]
+  top_reporters: TopReporter[]
+  recent_sightings: RecentSighting[]
+}
+ 
+export type AnalyticsParams = {
+  days?: number
+  reporter_limit?: number
+}
+ 
+// Small helper: builds a query string, skipping undefined/empty values so
+// callers can pass a partial params object without manually filtering it.
+function buildQuery(params: Record<string, unknown>): string {
+  const search = new URLSearchParams()
+  for (const [key, value] of Object.entries(params)) {
+    if (value !== undefined && value !== null && value !== '') {
+      search.set(key, String(value))
+    }
+  }
+  const qs = search.toString()
+  return qs ? `?${qs}` : ''
+}
+ 
+export const sightingsApi = {
+  search: (params: SightingSearchParams = {}) =>
+    api.get<SightingSearchResult>(`/api/search/sightings${buildQuery(params)}`),
+  zones: () => api.get<Zone[]>('/sightings/zones'),
+}
+ 
+export const analyticsApi = {
+  summary: (params: AnalyticsParams = {}) =>
+    api.get<AnalyticsSummary>(`/api/analytics/summary${buildQuery(params)}`),
+}
