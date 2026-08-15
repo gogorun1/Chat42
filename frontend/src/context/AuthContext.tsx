@@ -291,6 +291,8 @@ export interface User {
   email: string
   ft_login: string | null
   role: UserRole
+  display_name: string | null
+  avatar_url: string | null
 }
 
 interface AuthContextValue {
@@ -299,6 +301,7 @@ interface AuthContextValue {
   login: (email: string, password: string) => Promise<void>
   signup: (email: string, password: string) => Promise<void>
   logout: () => Promise<void>
+  refreshUser: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined)
@@ -328,8 +331,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null)
   }
 
+  async function refreshUser() {
+    setUser(await api.get<User>('/auth/me'))
+  }
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, signup, logout }}>{children}</AuthContext.Provider>
+    <AuthContext.Provider value={{ user, loading, login, signup, logout, refreshUser }}>
+      {children}
+    </AuthContext.Provider>
   )
 }
 
