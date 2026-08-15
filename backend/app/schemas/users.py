@@ -23,3 +23,9 @@ class FriendEntry(BaseModel):
 class FriendListRead(BaseModel):
     friends: list[FriendEntry]
     pending_requests: list[FriendEntry]
+
+
+class UserSearchResult(BaseModel):
+    id: int
+    display_name: str | None
+    avatar_url: str | None

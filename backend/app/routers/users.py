@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
 from sqlalchemy import and_, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -13,7 +13,7 @@ from app.models.notification import NotificationType
 from app.models.user import User
 from app.schemas.auth import UserRead
 from app.schemas.notification import NotificationCreate
-from app.schemas.users import FriendEntry, FriendListRead, ProfileUpdate, PublicProfileRead
+from app.schemas.users import FriendEntry, FriendListRead, ProfileUpdate, PublicProfileRead, UserSearchResult
 from app.services.notification_service import notify_user
 from app.services.storage import save_upload
 
@@ -55,6 +55,28 @@ async def list_friends(
             pending.append(entry)
 
     return FriendListRead(friends=friends, pending_requests=pending)
+
+
+@router.get("/search", response_model=list[UserSearchResult])
+async def search_users(
+    q: str = Query(min_length=1, max_length=100),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> list[UserSearchResult]:
+    like = f"%{q}%"
+    result = await db.execute(
+        select(User)
+        .where(
+            User.id != current_user.id,
+            or_(User.display_name.ilike(like), User.email.ilike(like)),
+        )
+        .order_by(User.display_name)
+        .limit(20)
+    )
+    return [
+        UserSearchResult(id=u.id, display_name=u.display_name, avatar_url=u.avatar_url)
+        for u in result.scalars().all()
+    ]
 
 
 @router.post("/{user_id}/friend-request", status_code=status.HTTP_201_CREATED)

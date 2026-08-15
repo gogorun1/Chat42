@@ -23,6 +23,12 @@ type FriendList = {
   pending_requests: FriendEntry[]
 }
 
+type UserSearchResult = {
+  id: number
+  display_name: string | null
+  avatar_url: string | null
+}
+
 export function ProfilePage() {
   const { id } = useParams()
   const { user: currentUser } = useAuth()
@@ -56,6 +62,10 @@ function OwnProfile() {
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [friendList, setFriendList] = useState<FriendList | null>(null)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [searchResults, setSearchResults] = useState<UserSearchResult[] | null>(null)
+  const [searchError, setSearchError] = useState<string | null>(null)
+  const [sentRequests, setSentRequests] = useState<Set<number>>(new Set())
 
   function loadFriends() {
     api.get<FriendList>('/users/me/friends').then(setFriendList).catch(() => undefined)
@@ -101,6 +111,27 @@ function OwnProfile() {
     loadFriends()
   }
 
+  async function handleSearch(event: FormEvent) {
+    event.preventDefault()
+    setSearchError(null)
+    try {
+      const results = await api.get<UserSearchResult[]>(`/users/search?q=${encodeURIComponent(searchQuery)}`)
+      setSearchResults(results)
+    } catch (err) {
+      setSearchError(err instanceof ApiError ? err.message : 'Search failed')
+    }
+  }
+
+  async function handleSendRequest(userId: number) {
+    setSearchError(null)
+    try {
+      await api.post(`/users/${userId}/friend-request`)
+      setSentRequests((prev) => new Set(prev).add(userId))
+    } catch (err) {
+      setSearchError(err instanceof ApiError ? err.message : 'Failed to send friend request')
+    }
+  }
+
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-8 px-4 py-10">
       <div>
@@ -139,6 +170,63 @@ function OwnProfile() {
           Save
         </button>
       </form>
+
+      <section className="rounded-xl border border-slate-800 bg-slate-900 p-6">
+        <h2 className="mb-4 text-lg font-semibold">Find people</h2>
+        <form onSubmit={handleSearch} className="flex gap-2">
+          <input
+            value={searchQuery}
+            onChange={(event) => setSearchQuery(event.target.value)}
+            placeholder="Search by name or email"
+            className="flex-1 rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm"
+          />
+          <button
+            type="submit"
+            disabled={!searchQuery.trim()}
+            className="rounded-md bg-slate-700 px-4 py-2 text-sm font-medium hover:bg-slate-600 disabled:opacity-50"
+          >
+            Search
+          </button>
+        </form>
+        {searchError && <p className="mt-2 text-sm text-red-400">{searchError}</p>}
+        {searchResults && (
+          <ul className="mt-4 divide-y divide-slate-800">
+            {searchResults.map((result) => {
+              const isFriend = friendList?.friends.some((f) => f.id === result.id)
+              const incomingRequest = friendList?.pending_requests.find((f) => f.id === result.id)
+              const alreadySent = sentRequests.has(result.id)
+              return (
+                <li key={result.id} className="flex items-center justify-between py-2 text-sm">
+                  <span className="flex items-center gap-2">
+                    <Avatar url={result.avatar_url} size={32} />
+                    {result.display_name ?? `User #${result.id}`}
+                  </span>
+                  {isFriend ? (
+                    <span className="text-xs text-slate-500">Already friends</span>
+                  ) : incomingRequest ? (
+                    <button
+                      onClick={() => handleAccept(incomingRequest.friendship_id)}
+                      className="rounded-md bg-emerald-600 px-3 py-1 text-xs font-medium hover:bg-emerald-500"
+                    >
+                      Accept
+                    </button>
+                  ) : alreadySent ? (
+                    <span className="text-xs text-slate-500">Requested</span>
+                  ) : (
+                    <button
+                      onClick={() => handleSendRequest(result.id)}
+                      className="rounded-md bg-emerald-600 px-3 py-1 text-xs font-medium hover:bg-emerald-500"
+                    >
+                      Add friend
+                    </button>
+                  )}
+                </li>
+              )
+            })}
+            {searchResults.length === 0 && <li className="py-2 text-sm text-slate-500">No users found.</li>}
+          </ul>
+        )}
+      </section>
 
       <section className="rounded-xl border border-slate-800 bg-slate-900 p-6">
         <h2 className="mb-4 text-lg font-semibold">Friend requests</h2>
