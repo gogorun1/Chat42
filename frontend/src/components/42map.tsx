@@ -1,6 +1,15 @@
 import { useEffect, useState } from "react";
 
-import { api, ApiError, Diary, GuessResult, SearchSighting, SightingSearchResult, Zone } from "../lib/api";
+import {
+  api,
+  ApiError,
+  Diary,
+  GuessResult,
+  LeaderboardEntry,
+  SearchSighting,
+  SightingSearchResult,
+  Zone,
+} from "../lib/api";
 import { useAuth } from "../context/AuthContext";
 
 import building42 from "../assets/maps/building.svg";
@@ -140,11 +149,19 @@ export default function CampusMap() {
   const [campusSightings, setCampusSightings] = useState<SearchSighting[]>([]);
   const [diary, setDiary] = useState<Diary | null>(null);
   const [diaryError, setDiaryError] = useState<string | null>(null);
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[] | null>(null);
 
   function loadCampusSightings() {
     api
       .get<SightingSearchResult>("/search/sightings?page_size=100&sort_by=created_at&sort_order=desc")
       .then((result) => setCampusSightings(result.items))
+      .catch(() => undefined);
+  }
+
+  function loadLeaderboard() {
+    api
+      .get<LeaderboardEntry[]>("/gamification/leaderboard?limit=100")
+      .then(setLeaderboard)
       .catch(() => undefined);
   }
 
@@ -158,6 +175,7 @@ export default function CampusMap() {
       .get<Diary>("/ai/diary")
       .then(setDiary)
       .catch((err) => setDiaryError(err instanceof ApiError ? err.message : "Failed to load diary"));
+    loadLeaderboard();
   }, []);
 
   const currentZone = zones[selectedZone];
@@ -211,6 +229,7 @@ async function handleGuess() {
   try {
     const result = await api.post<GuessResult>("/gamification/guess", { zone_id: backendZone.id });
     await refreshUser();
+    loadLeaderboard();
 
     setGuessMessage(
       result.correct
@@ -270,6 +289,7 @@ async function handleGuess() {
         "🐱 Thank you! Your Moulinette sighting has been reported."
       );
       loadCampusSightings();
+      loadLeaderboard();
       setReportZone("");
       setReportPhoto(null);
     } catch (err) {
@@ -744,9 +764,22 @@ async function handleGuess() {
 
           <div className="mt-6 space-y-3">
 
-            <p>🥇 Test — 250 pts</p>
-            <p>🥈 Test — 180 pts</p>
-            <p>🥉 Test — 150 pts</p>
+            {leaderboard?.map((entry, index) => {
+              const medal = ["🥇", "🥈", "🥉"][index] ?? `#${index + 1}`;
+              const isMe = entry.user_id === user?.id;
+              return (
+                <p
+                  key={entry.user_id}
+                  className={isMe ? "font-bold text-amber-300" : ""}
+                >
+                  {medal} {entry.display_name ?? `User #${entry.user_id}`} — {entry.score} pts
+                </p>
+              );
+            })}
+
+            {leaderboard && leaderboard.length === 0 && (
+              <p className="text-slate-500">No one on the board yet.</p>
+            )}
 
           </div>
 
