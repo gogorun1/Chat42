@@ -12,9 +12,6 @@ export function Layout() {
             <Link to="/" className="font-medium hover:text-emerald-400">
               Chat 42
             </Link>
-            <Link to="/upload" className="text-slate-400 hover:text-slate-200">
-              Report sighting
-            </Link>
             <Link to="/profile" className="text-slate-400 hover:text-slate-200">
               Profile
             </Link>
