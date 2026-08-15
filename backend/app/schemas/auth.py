@@ -22,3 +22,4 @@ class UserRead(BaseModel):
     role: UserRole
     display_name: str | None
     avatar_url: str | None
+    guess_points: int

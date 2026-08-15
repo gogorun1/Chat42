@@ -1,7 +1,8 @@
 import { ChangeEvent, FormEvent, useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
-import { api, ApiError } from '../lib/api'
+import { api, ApiError, Badge, Sighting } from '../lib/api'
 import { useAuth } from '../context/AuthContext'
+import cat from '../assets/maps/cat.svg'
 
 type PublicProfile = {
   id: number
@@ -67,12 +68,22 @@ function OwnProfile() {
   const [searchResults, setSearchResults] = useState<UserSearchResult[] | null>(null)
   const [searchError, setSearchError] = useState<string | null>(null)
   const [sentRequests, setSentRequests] = useState<Set<number>>(new Set())
+  const [mySightings, setMySightings] = useState<Sighting[] | null>(null)
+  const [badges, setBadges] = useState<Badge[] | null>(null)
 
   function loadFriends() {
     api.get<FriendList>('/users/me/friends').then(setFriendList).catch(() => undefined)
   }
 
   useEffect(loadFriends, [])
+
+  useEffect(() => {
+    api.get<Sighting[]>('/sightings/').then(setMySightings).catch(() => undefined)
+  }, [])
+
+  useEffect(() => {
+    api.get<Badge[]>('/gamification/achievements').then(setBadges).catch(() => undefined)
+  }, [])
 
   async function handleSaveName(event: FormEvent) {
     event.preventDefault()
@@ -135,9 +146,12 @@ function OwnProfile() {
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-8 px-4 py-10">
-      <div>
-        <h1 className="text-2xl font-semibold">Profile</h1>
-        <p className="mt-1 text-sm text-slate-400">{user?.email}</p>
+      <div className="flex items-center gap-3">
+        <img src={cat} alt="" className="h-10 w-10" style={{ imageRendering: 'pixelated' }} />
+        <div>
+          <h1 className="text-2xl font-semibold">🐱 Profile</h1>
+          <p className="mt-1 text-sm text-slate-400">{user?.email}</p>
+        </div>
       </div>
 
       {error && <p className="text-sm text-red-400">{error}</p>}
@@ -173,7 +187,7 @@ function OwnProfile() {
       </form>
 
       <section className="rounded-xl border border-slate-800 bg-slate-900 p-6">
-        <h2 className="mb-4 text-lg font-semibold">Find people</h2>
+        <h2 className="mb-4 text-lg font-semibold">🐾 Find people</h2>
         <form onSubmit={handleSearch} className="flex gap-2">
           <input
             value={searchQuery}
@@ -233,7 +247,7 @@ function OwnProfile() {
       </section>
 
       <section className="rounded-xl border border-slate-800 bg-slate-900 p-6">
-        <h2 className="mb-4 text-lg font-semibold">Friend requests</h2>
+        <h2 className="mb-4 text-lg font-semibold">🐾 Friend requests</h2>
         <ul className="divide-y divide-slate-800">
           {friendList?.pending_requests.map((entry) => (
             <li key={entry.friendship_id} className="flex items-center justify-between py-2 text-sm">
@@ -256,7 +270,7 @@ function OwnProfile() {
       </section>
 
       <section className="rounded-xl border border-slate-800 bg-slate-900 p-6">
-        <h2 className="mb-4 text-lg font-semibold">Friends</h2>
+        <h2 className="mb-4 text-lg font-semibold">🐾 Friends</h2>
         <ul className="divide-y divide-slate-800">
           {friendList?.friends.map((entry) => (
             <li key={entry.friendship_id} className="flex items-center justify-between py-2 text-sm">
@@ -273,6 +287,46 @@ function OwnProfile() {
           {friendList && friendList.friends.length === 0 && (
             <li className="py-2 text-sm text-slate-500">No friends yet.</li>
           )}
+        </ul>
+      </section>
+
+      <section className="rounded-xl border border-slate-800 bg-slate-900 p-6">
+        <h2 className="mb-4 text-lg font-semibold">🐾 My sighting history</h2>
+        <ul className="divide-y divide-slate-800">
+          {mySightings?.map((sighting) => (
+            <li key={sighting.id} className="flex items-center gap-3 py-2 text-sm">
+              <img
+                src={sighting.image_url}
+                alt={`Cat spotted in ${sighting.zone.name}`}
+                className="h-12 w-12 rounded-md border border-slate-700 object-cover"
+              />
+              <span className="flex flex-col">
+                <span>{sighting.zone.name}</span>
+                <span className="text-xs text-slate-500">
+                  {new Date(sighting.created_at).toLocaleString()}
+                </span>
+              </span>
+            </li>
+          ))}
+          {mySightings && mySightings.length === 0 && (
+            <li className="py-2 text-sm text-slate-500">No sightings reported yet.</li>
+          )}
+        </ul>
+      </section>
+
+      <section className="rounded-xl border border-slate-800 bg-slate-900 p-6">
+        <h2 className="mb-4 text-lg font-semibold">🏅 Badges</h2>
+        {badges && badges.length === 0 && (
+          <p className="text-sm text-slate-500">No badges yet — go log a sighting!</p>
+        )}
+        <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+          {badges?.map((badge) => (
+            <li key={badge.code} className="rounded-lg border border-slate-800 bg-slate-950 p-3 text-center">
+              <p className="text-2xl">🏅</p>
+              <p className="mt-1 text-sm font-medium">{badge.name}</p>
+              <p className="mt-1 text-xs text-slate-500">{badge.description}</p>
+            </li>
+          ))}
         </ul>
       </section>
     </div>
@@ -329,7 +383,7 @@ function OtherProfile({ userId }: { userId: number }) {
         <div>
           <h1 className="text-xl font-semibold">{profile.display_name ?? `User #${profile.id}`}</h1>
           <p className={`text-sm ${profile.online ? 'text-emerald-400' : 'text-slate-500'}`}>
-            {profile.online ? 'Online' : 'Offline'}
+            {profile.online ? '🐾 Online' : 'Offline'}
           </p>
         </div>
       </section>
