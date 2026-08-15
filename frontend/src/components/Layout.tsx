@@ -15,9 +15,6 @@ export function Layout() {
             <Link to="/profile" className="text-slate-400 hover:text-slate-200">
               Profile
             </Link>
-            <Link to="/gamification" className="text-slate-400 hover:text-slate-200">
-              Gamification
-            </Link>
             {(user.role === 'moderator' || user.role === 'admin') && (
               <Link to="/admin" className="text-slate-400 hover:text-slate-200">
                 Admin
