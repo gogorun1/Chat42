@@ -38,3 +38,7 @@ class User(Base):
         back_populates="user",
         cascade="all, delete-orphan",
     )
+
+    @property
+    def avatar_url(self) -> str | None:
+        return f"/uploads/{self.avatar_path}" if self.avatar_path else None
