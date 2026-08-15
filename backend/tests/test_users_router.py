@@ -137,6 +137,57 @@ async def test_get_public_profile_missing_user_returns_404(users_app, users_clie
 
 
 @pytest.mark.asyncio
+async def test_search_users_matches_display_name_case_insensitively(users_app, users_client, db_session):
+    db_session.add_all(
+        [
+            User(email="bob@example.com", display_name="Bob Builder"),
+            User(email="carol@example.com", display_name="Carol"),
+        ]
+    )
+    await db_session.commit()
+
+    await _login_as(users_app, db_session, User(email="alice@example.com"))
+
+    response = users_client.get("/users/search", params={"q": "bob"})
+
+    assert response.status_code == 200
+    results = response.json()
+    assert [r["display_name"] for r in results] == ["Bob Builder"]
+
+
+@pytest.mark.asyncio
+async def test_search_users_matches_email(users_app, users_client, db_session):
+    db_session.add(User(email="findme@example.com", display_name=None))
+    await db_session.commit()
+
+    await _login_as(users_app, db_session, User(email="alice@example.com"))
+
+    response = users_client.get("/users/search", params={"q": "findme"})
+
+    assert response.status_code == 200
+    assert len(response.json()) == 1
+
+
+@pytest.mark.asyncio
+async def test_search_users_excludes_self(users_app, users_client, db_session):
+    await _login_as(users_app, db_session, User(email="alice@example.com", display_name="Alice"))
+
+    response = users_client.get("/users/search", params={"q": "alice"})
+
+    assert response.status_code == 200
+    assert response.json() == []
+
+
+@pytest.mark.asyncio
+async def test_search_users_requires_query(users_app, users_client, db_session):
+    await _login_as(users_app, db_session, User(email="alice@example.com"))
+
+    response = users_client.get("/users/search")
+
+    assert response.status_code == 422
+
+
+@pytest.mark.asyncio
 async def test_send_friend_request_creates_pending_row_and_notification(
     users_app, users_client, db_session
 ):
