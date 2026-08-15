@@ -10,3 +10,16 @@ class PublicProfileRead(BaseModel):
     display_name: str | None
     avatar_url: str | None
     online: bool
+
+
+class FriendEntry(BaseModel):
+    friendship_id: int
+    id: int
+    display_name: str | None
+    avatar_url: str | None
+    online: bool
+
+
+class FriendListRead(BaseModel):
+    friends: list[FriendEntry]
+    pending_requests: list[FriendEntry]
