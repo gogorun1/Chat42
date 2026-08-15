@@ -50,7 +50,7 @@ async def leaderboard(
     entries = [
         LeaderboardEntry(
             user_id=user.id,
-            display_name=user.display_name,
+            display_name=user.display_name or user.email.split("@")[0],
             avatar_url=user.avatar_url,
             sighting_count=sighting_counts.get(user.id, 0),
             guess_points=user.guess_points,
