@@ -329,7 +329,10 @@ async function handleGuess() {
               </button>
 
               <button
-                onClick={() => setPage("map")}
+                onClick={() => {
+                  setSelectedZone(latestSighting.zone);
+                  setPage("map");
+                }}
                 className="rounded-xl border border-slate-700 bg-slate-800 px-5 py-4 font-semibold hover:bg-slate-700"
               >
                 😿 No thanks, show me
@@ -425,7 +428,10 @@ async function handleGuess() {
             )}
 
             <button
-              onClick={() => setPage("map")}
+              onClick={() => {
+                setSelectedZone(latestSighting.zone);
+                setPage("map");
+              }}
               className="mt-4 w-full rounded-xl border border-slate-700 px-5 py-3 text-slate-300 hover:bg-slate-800"
             >
               Skip and see the map
