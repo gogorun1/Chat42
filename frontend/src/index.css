@@ -91,6 +91,18 @@ html {
     catFloat 1.6s ease-in-out infinite alternate;
 }
 
+/* Cat marker on the campus map — bigger and fully opaque, glow matches the
+   intro screen's yellow. */
+.cat-icon-map {
+  width: 150px;
+
+  opacity: 1;
+
+  filter:
+    drop-shadow(0 0 12px #facc15)
+    drop-shadow(0 0 22px #facc15);
+}
+
 /* ================= ANIMATIONS ================= */
 
 @keyframes catFloat {
@@ -149,6 +161,10 @@ html {
 @media (max-width: 768px) {
   .cat-icon {
     width: 54px;
+  }
+
+  .cat-icon-map {
+    width: 110px;
   }
 
   .cat-glow {

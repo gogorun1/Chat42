@@ -1,4 +1,16 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+
+import {
+  api,
+  ApiError,
+  Diary,
+  GuessResult,
+  LeaderboardEntry,
+  SearchSighting,
+  SightingSearchResult,
+  Zone,
+} from "../lib/api";
+import { useAuth } from "../context/AuthContext";
 
 import building42 from "../assets/maps/building.svg";
 import cantineM1 from "../assets/maps/cantine_m1.svg";
@@ -16,7 +28,6 @@ import stairs from "../assets/maps/stairs.svg";
 import cat from "../assets/maps/cat.svg";
 
 import { lastSighting } from "../data/cat";
-import { sightings } from "../data/sighting";
 
 import GameMenu from "./GameMenu";
 
@@ -114,24 +125,72 @@ export  const zones: any = {
 };
 
 export default function CampusMap() {
+  const { user, refreshUser } = useAuth();
   const [page, setPage] = useState("intro");
 
   const [selectedZone, setSelectedZone] = useState(lastSighting.zone);
 
-  // Player points
-  const [points, setPoints] = useState(120);
+  // Player points — persisted server-side on the user (see
+  // POST /gamification/guess), not local state, so it survives a refresh
+  // and feeds into /gamification/leaderboard's score.
+  const points = user?.guess_points ?? 0;
 
   // Guess state
   const [guessZone, setGuessZone] = useState("");
   const [guessMessage, setGuessMessage] = useState("");
+  const [guessSubmitting, setGuessSubmitting] = useState(false);
 
   // Report state
   const [reportZone, setReportZone] = useState("");
-  const [reportTime, setReportTime] = useState("");
   const [reportPhoto, setReportPhoto] = useState<File | null>(null);
   const [reportMessage, setReportMessage] = useState("");
+  const [reportSubmitting, setReportSubmitting] = useState(false);
+  const [backendZones, setBackendZones] = useState<Zone[]>([]);
+  const [campusSightings, setCampusSightings] = useState<SearchSighting[]>([]);
+  const [diary, setDiary] = useState<Diary | null>(null);
+  const [diaryError, setDiaryError] = useState<string | null>(null);
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[] | null>(null);
+
+  function loadCampusSightings() {
+    api
+      .get<SightingSearchResult>("/search/sightings?page_size=100&sort_by=created_at&sort_order=desc")
+      .then((result) => setCampusSightings(result.items))
+      .catch(() => undefined);
+  }
+
+  function loadLeaderboard() {
+    api
+      .get<LeaderboardEntry[]>("/gamification/leaderboard?limit=100")
+      .then(setLeaderboard)
+      .catch(() => undefined);
+  }
+
+  useEffect(() => {
+    api
+      .get<Zone[]>("/sightings/zones")
+      .then(setBackendZones)
+      .catch(() => undefined);
+    loadCampusSightings();
+    api
+      .get<Diary>("/ai/diary")
+      .then(setDiary)
+      .catch((err) => setDiaryError(err instanceof ApiError ? err.message : "Failed to load diary"));
+    loadLeaderboard();
+  }, []);
 
   const currentZone = zones[selectedZone];
+
+  // Real "last seen" — most recent real sighting, mapped back to the local
+  // zone/reporter/time shape F4's Guess flow and Last Seen card already use.
+  // Falls back to the mock lastSighting until a real sighting exists.
+  const mostRecentReal = campusSightings[0];
+  const latestSighting = mostRecentReal
+    ? {
+        zone: backendZones.find((zone) => zone.id === mostRecentReal.zone_id)?.slug ?? lastSighting.zone,
+        reporter: mostRecentReal.reporter_email,
+        time: new Date(mostRecentReal.created_at).toLocaleTimeString(),
+      }
+    : lastSighting;
 
   // ---------------------------------------------------------
   // HEAT MAP
@@ -139,15 +198,16 @@ export default function CampusMap() {
 
   const heat: any = {};
 
-  sightings.forEach((s) => {
-    heat[s.zone] = (heat[s.zone] || 0) + 1;
+  campusSightings.forEach((s) => {
+    const slug = backendZones.find((zone) => zone.id === s.zone_id)?.slug;
+    if (slug) heat[slug] = (heat[slug] || 0) + 1;
   });
 
   // ---------------------------------------------------------
   // GUESS
   // ---------------------------------------------------------
 
-function handleGuess() {
+async function handleGuess() {
   if (!guessZone) {
     setGuessMessage("🐱 Choose a location first!");
     return;
@@ -158,26 +218,36 @@ function handleGuess() {
     return;
   }
 
-  // Spend 1 point
-  setPoints((previous) => previous - 1);
-
-  const correct = guessZone === lastSighting.zone;
-
-  if (correct) {
-    // Correct answer → +3 points
-    setPoints((previous) => previous + 3);
-
-    setGuessMessage(
-      "🎉 Meeeow! You found me! I was hiding right there!  +3 points!"
-    );
-  } else {
-    setGuessMessage(
-      "😿 Meow… not here! Better luck next time!"
-    );
+  const backendZone = backendZones.find((zone) => zone.slug === guessZone);
+  if (!backendZone) {
+    setGuessMessage("😿 That location isn't set up on the server yet.");
+    return;
   }
 
-  // Show the result briefly, then reveal the map
+  setGuessSubmitting(true);
+
+  try {
+    const result = await api.post<GuessResult>("/gamification/guess", { zone_id: backendZone.id });
+    await refreshUser();
+    loadLeaderboard();
+
+    setGuessMessage(
+      result.correct
+        ? "🎉 Meeeow! You found me! I was hiding right there!  +3 points!"
+        : "😿 Meow… not here! Better luck next time!"
+    );
+  } catch (err) {
+    setGuessMessage(err instanceof ApiError ? `😿 ${err.message}` : "😿 Failed to submit your guess.");
+    setGuessSubmitting(false);
+    return;
+  }
+
+  setGuessSubmitting(false);
+
+  // Show the result briefly, then reveal the map open to where the cat
+  // actually was
   setTimeout(() => {
+    setSelectedZone(latestSighting.zone);
     setPage("map");
     setGuessMessage("");
     setGuessZone("");
@@ -189,32 +259,46 @@ function handleGuess() {
   // REPORT
   // ---------------------------------------------------------
 
-  function handleReport() {
+  async function handleReport() {
     if (!reportZone) {
       setReportMessage("📍 Please choose where you saw Moulinette.");
       return;
     }
 
-    if (!reportTime) {
-      setReportMessage("⏰ Please choose when you saw Moulinette.");
+    if (!reportPhoto) {
+      setReportMessage("📷 Please attach a photo.");
       return;
     }
 
-    // For now this only confirms the report locally.
-    // Later this function should call your backend API.
-    console.log("CAT REPORT", {
-      zone: reportZone,
-      time: reportTime,
-      photo: reportPhoto,
-    });
+    const backendZone = backendZones.find((zone) => zone.slug === reportZone);
+    if (!backendZone) {
+      setReportMessage("😿 That location isn't set up on the server yet.");
+      return;
+    }
 
-    setReportMessage(
-      "🐱 Thank you! Your Moulinette sighting has been reported."
-    );
+    setReportSubmitting(true);
+    setReportMessage("");
 
-    setReportZone("");
-    setReportTime("");
-    setReportPhoto(null);
+    const formData = new FormData();
+    formData.append("zone_id", String(backendZone.id));
+    formData.append("image", reportPhoto);
+
+    try {
+      await api.postForm("/sightings/", formData);
+      setReportMessage(
+        "🐱 Thank you! Your Moulinette sighting has been reported."
+      );
+      loadCampusSightings();
+      loadLeaderboard();
+      setReportZone("");
+      setReportPhoto(null);
+    } catch (err) {
+      setReportMessage(
+        err instanceof ApiError ? `😿 ${err.message}` : "😿 Failed to report sighting."
+      );
+    } finally {
+      setReportSubmitting(false);
+    }
   }
 
   // =========================================================
@@ -271,7 +355,10 @@ function handleGuess() {
               </button>
 
               <button
-                onClick={() => setPage("map")}
+                onClick={() => {
+                  setSelectedZone(latestSighting.zone);
+                  setPage("map");
+                }}
                 className="rounded-xl border border-slate-700 bg-slate-800 px-5 py-4 font-semibold hover:bg-slate-700"
               >
                 😿 No thanks, show me
@@ -354,10 +441,10 @@ function handleGuess() {
 
             <button
               onClick={handleGuess}
-              disabled={!guessZone || points < 1}
+              disabled={!guessZone || points < 1 || guessSubmitting}
               className="mt-6 w-full rounded-xl bg-amber-400 px-5 py-4 font-bold text-slate-950 transition hover:bg-amber-300 disabled:cursor-not-allowed disabled:opacity-40"
             >
-              🎯 Confirm my guess — ⭐ 1 point
+              {guessSubmitting ? "Confirming…" : "🎯 Confirm my guess — ⭐ 1 point"}
             </button>
 
             {guessMessage && (
@@ -367,7 +454,10 @@ function handleGuess() {
             )}
 
             <button
-              onClick={() => setPage("map")}
+              onClick={() => {
+                setSelectedZone(latestSighting.zone);
+                setPage("map");
+              }}
               className="mt-4 w-full rounded-xl border border-slate-700 px-5 py-3 text-slate-300 hover:bg-slate-800"
             >
               Skip and see the map
@@ -428,19 +518,6 @@ function handleGuess() {
               ))}
             </select>
 
-            {/* TIME */}
-
-            <label className="mt-6 block text-sm font-semibold text-slate-300">
-              ⏰ When did you see her?
-            </label>
-
-            <input
-              type="datetime-local"
-              value={reportTime}
-              onChange={(e) => setReportTime(e.target.value)}
-              className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-800 p-3 text-white"
-            />
-
             {/* PHOTO */}
 
             <label className="mt-6 block text-sm font-semibold text-slate-300">
@@ -466,9 +543,10 @@ function handleGuess() {
 
             <button
               onClick={handleReport}
-              className="mt-8 w-full rounded-xl bg-amber-400 px-5 py-4 font-bold text-slate-950 hover:bg-amber-300"
+              disabled={reportSubmitting}
+              className="mt-8 w-full rounded-xl bg-amber-400 px-5 py-4 font-bold text-slate-950 hover:bg-amber-300 disabled:cursor-not-allowed disabled:opacity-40"
             >
-              🐱 Submit sighting
+              {reportSubmitting ? "Submitting…" : "🐱 Submit sighting"}
             </button>
 
             {reportMessage && (
@@ -536,11 +614,11 @@ function handleGuess() {
               className="map-svg"
             />
 
-            {selectedZone === lastSighting.zone && (
+            {selectedZone === latestSighting.zone && (
               <img
                 src={cat}
                 alt="Moulinette"
-                className="cat-icon"
+                className="cat-icon cat-icon-map"
               />
             )}
 
@@ -555,15 +633,15 @@ function handleGuess() {
             </h2>
 
             <p className="mt-2">
-              Zone: {lastSighting.zone}
+              Zone: {latestSighting.zone}
             </p>
 
             <p>
-              Reporter: {lastSighting.reporter}
+              Reporter: {latestSighting.reporter}
             </p>
 
             <p>
-              Time: {lastSighting.time}
+              Time: {latestSighting.time}
             </p>
 
           </div>
@@ -582,22 +660,26 @@ function handleGuess() {
             🐾 Cat History
           </h1>
 
-          {sightings.map((s, index) => (
+          {campusSightings.map((s) => (
             <div
-              key={index}
+              key={s.id}
               className="mb-3 rounded-xl bg-slate-900 p-4"
             >
-              🐾 {zones[s.zone]?.name || s.zone}
+              🐾 {s.zone_name}
 
               <br />
 
-              👤 {s.reporter}
+              👤 {s.reporter_email}
 
               <br />
 
-              ⏰ {s.time}
+              ⏰ {new Date(s.created_at).toLocaleString()}
             </div>
           ))}
+
+          {campusSightings.length === 0 && (
+            <p className="text-slate-500">No sightings reported yet.</p>
+          )}
 
         </div>
       )}
@@ -642,13 +724,29 @@ function handleGuess() {
             📖 Moulinette's Diary
           </h1>
 
-          <p className="mt-6 text-slate-300">
-            Today I explored the campus...
-          </p>
+          {diary && (
+            <p className="mt-2 text-sm text-slate-500">
+              {diary.date}
+            </p>
+          )}
 
-          <p className="mt-2">
-            Meow 🐱
-          </p>
+          {diaryError && (
+            <p className="mt-6 text-red-400">
+              😿 {diaryError}
+            </p>
+          )}
+
+          {!diary && !diaryError && (
+            <p className="mt-6 text-slate-400">
+              Moulinette is writing today's entry…
+            </p>
+          )}
+
+          {diary && (
+            <p className="mt-6 whitespace-pre-line text-slate-300">
+              {diary.content}
+            </p>
+          )}
 
         </div>
       )}
@@ -666,9 +764,22 @@ function handleGuess() {
 
           <div className="mt-6 space-y-3">
 
-            <p>🥇 Test — 250 pts</p>
-            <p>🥈 Test — 180 pts</p>
-            <p>🥉 Test — 150 pts</p>
+            {leaderboard?.map((entry, index) => {
+              const medal = ["🥇", "🥈", "🥉"][index] ?? `#${index + 1}`;
+              const isMe = entry.user_id === user?.id;
+              return (
+                <p
+                  key={entry.user_id}
+                  className={isMe ? "font-bold text-amber-300" : ""}
+                >
+                  {medal} {entry.display_name ?? `User #${entry.user_id}`} — {entry.score} pts
+                </p>
+              );
+            })}
+
+            {leaderboard && leaderboard.length === 0 && (
+              <p className="text-slate-500">No one on the board yet.</p>
+            )}
 
           </div>
 

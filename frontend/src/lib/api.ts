@@ -61,3 +61,47 @@ export type Sighting = {
   created_at: string
   zone: Zone
 }
+
+export type SearchSighting = {
+  id: number
+  zone_id: number
+  zone_name: string
+  reporter_id: number
+  reporter_email: string
+  image_url: string
+  created_at: string
+}
+
+export type SightingSearchResult = {
+  items: SearchSighting[]
+  total: number
+  page: number
+  page_size: number
+}
+
+export type Diary = {
+  date: string
+  content: string
+}
+
+export type Badge = {
+  code: string
+  name: string
+  description: string
+  awarded_at: string
+}
+
+export type LeaderboardEntry = {
+  user_id: number
+  display_name: string | null
+  avatar_url: string | null
+  sighting_count: number
+  guess_points: number
+  score: number
+}
+
+export type GuessResult = {
+  correct: boolean
+  guess_points: number
+  actual_zone_id: number
+}
