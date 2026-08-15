@@ -1,6 +1,7 @@
 # ADR 004: 社区与激励(F7)
 
-- 状态:后端已实现(徽章、排行榜、竞猜端点全部完成并测试通过);前端待做
+- 状态:已实现,前后端全部接通(`42map.tsx` 六个 tab——Report/History/Heat
+  Map/Guess/Diary/Ranking——都在读写真实后端,不再有 mock 数据分支)
 - 日期:2026-08-15
 
 ## 背景
@@ -210,3 +211,22 @@ DB 里没有任何 `sightings` 引用旧 zone,唯一一条测试用的 `predicti
 7. 浏览器手动验证:攒够条件解锁徽章、排行榜排序正确、提交竞猜次日结算。
    **待做**——这一步我(Claude)没有浏览器可以操作,需要你本人登录点一遍
    `/gamification` 和 profile 页面确认视觉/交互没问题。
+
+## 收尾(2026-08-15):`42map.tsx` 六个 tab 全部接通真实数据
+
+第 118 行那条"需要和 F4 对齐"的记录里提到的"两套猜猫体验并存"问题,现在
+按你和 F4 拍板的方案(猜今天、保持她的前端逻辑)解决了——不是二选一砍掉一
+套,是把 F4 的地图 UI 接到了真实后端上:
+
+- **Report**:`POST /sightings/`(F2),真实猫检测。
+- **History / Heat Map**:F8 的 `GET /search/sightings`(全校数据)。
+- **Guess**:`POST /gamification/guess`,服务端拿"最新一条真实目击"当答案
+  判定,`users.guess_points` 落库(起始 5 分)。
+- **Diary**:F9 的 `GET /ai/diary`(顺手发现并修了 `nginx.conf` 缺失
+  `/ai/` 转发的问题,这是 F9 遗留的、和 F7 无关的 gap)。
+- **Ranking**:`GET /gamification/leaderboard`。
+
+`data/cat.ts`/`data/sighting.ts` 这两个 mock 文件还在,只作为"数据库里还
+没有真实数据时"的 fallback(比如刚部署、一条 sighting 都没有的时候),不
+再是主数据源。首页"⭐ pts"/"🏆 Rank"和 Gamification 页排行榜、地图里的
+Ranking tab,现在三处显示的是同一个数字。
