@@ -1,6 +1,6 @@
 import { ChangeEvent, FormEvent, useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
-import { api, ApiError } from '../lib/api'
+import { api, ApiError, Sighting } from '../lib/api'
 import { useAuth } from '../context/AuthContext'
 
 type PublicProfile = {
@@ -67,12 +67,17 @@ function OwnProfile() {
   const [searchResults, setSearchResults] = useState<UserSearchResult[] | null>(null)
   const [searchError, setSearchError] = useState<string | null>(null)
   const [sentRequests, setSentRequests] = useState<Set<number>>(new Set())
+  const [mySightings, setMySightings] = useState<Sighting[] | null>(null)
 
   function loadFriends() {
     api.get<FriendList>('/users/me/friends').then(setFriendList).catch(() => undefined)
   }
 
   useEffect(loadFriends, [])
+
+  useEffect(() => {
+    api.get<Sighting[]>('/sightings/').then(setMySightings).catch(() => undefined)
+  }, [])
 
   async function handleSaveName(event: FormEvent) {
     event.preventDefault()
@@ -272,6 +277,30 @@ function OwnProfile() {
           ))}
           {friendList && friendList.friends.length === 0 && (
             <li className="py-2 text-sm text-slate-500">No friends yet.</li>
+          )}
+        </ul>
+      </section>
+
+      <section className="rounded-xl border border-slate-800 bg-slate-900 p-6">
+        <h2 className="mb-4 text-lg font-semibold">My sighting history</h2>
+        <ul className="divide-y divide-slate-800">
+          {mySightings?.map((sighting) => (
+            <li key={sighting.id} className="flex items-center gap-3 py-2 text-sm">
+              <img
+                src={sighting.image_url}
+                alt={`Cat spotted in ${sighting.zone.name}`}
+                className="h-12 w-12 rounded-md border border-slate-700 object-cover"
+              />
+              <span className="flex flex-col">
+                <span>{sighting.zone.name}</span>
+                <span className="text-xs text-slate-500">
+                  {new Date(sighting.created_at).toLocaleString()}
+                </span>
+              </span>
+            </li>
+          ))}
+          {mySightings && mySightings.length === 0 && (
+            <li className="py-2 text-sm text-slate-500">No sightings reported yet.</li>
           )}
         </ul>
       </section>
