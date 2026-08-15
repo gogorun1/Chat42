@@ -135,7 +135,28 @@ F4 地图里真实的 13 个 zone(migration
 DB 里没有任何 `sightings` 引用旧 zone,唯一一条测试用的 `predictions` 行随
 外键 `ON DELETE CASCADE` 一起被清掉了,不是数据迁移,是直接换。现在
 `GET /sightings/zones` 返回的就是这 13 个真实 zone(手动 curl 验证过)。
-guess-now-vs-guess-tomorrow 的规则分歧仍然没解决,需要当面/开会确认。
+
+**规则分歧已决定(2026-08-15,你和 F4 对接后拍板)**:猜**今天**,保持 F4 原本
+的前端逻辑不变(即时判定,不等隔天结算)。
+
+这个决定的后果需要记一下:
+- 已经把 `42map.tsx` 里 `Report`/`History`/`Heat Map` 用的 `lastSighting` 换
+  成了一个真实计算出来的 `latestSighting`(取 `GET /search/sightings` 最新
+  一条,按 `zone_id` 反查本地 slug),`Guess`/"Last Seen 卡片"/地图上的猫图
+  标现在判定的是"最新一条真实目击",不再是写死的 `cantine_m1`/`test6`/
+  `7:42`。数据库里还没有真实 sighting 时会 fallback 回原来的 mock,不会
+  报错。
+- `handleGuess` 的即时判分逻辑(花1分猜、猜中给3分、`points` 状态)**完全
+  没动**,只是换了判定依据的数据源。
+- **`points` 还是纯前端 state,刷新页面就归零,不落库、不跟用户账号绑定**——
+  这个事实没有因为接了真实"last seen"而改变,只是判定用的数据变真实了,
+  "分数"本身还是假的。这跟排行榜(`/gamification/leaderboard`,算的是
+  `目击数 + 竞猜正确数×10`)完全是两套不相关的分数,首页显示的"⭐ 120
+  pts"跟 Gamification 页的排行榜分数不会对上。
+- 我这边之前做的 `/gamification/predictions`(猜明天、懒结算)现在**没有
+  被这次决定的 Guess UI 使用**——两边不是同一个游戏。是留着(可能以后有别
+  的用途,比如做一个独立的"每日竞猜"功能),还是干脆砍掉,这个还没定,不
+  在这次改动范围内,先不动它。
 
 ## 不做的部分
 

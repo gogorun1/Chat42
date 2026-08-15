@@ -136,7 +136,7 @@ export default function CampusMap() {
 
   function loadCampusSightings() {
     api
-      .get<SightingSearchResult>("/search/sightings?page_size=100")
+      .get<SightingSearchResult>("/search/sightings?page_size=100&sort_by=created_at&sort_order=desc")
       .then((result) => setCampusSightings(result.items))
       .catch(() => undefined);
   }
@@ -150,6 +150,18 @@ export default function CampusMap() {
   }, []);
 
   const currentZone = zones[selectedZone];
+
+  // Real "last seen" — most recent real sighting, mapped back to the local
+  // zone/reporter/time shape F4's Guess flow and Last Seen card already use.
+  // Falls back to the mock lastSighting until a real sighting exists.
+  const mostRecentReal = campusSightings[0];
+  const latestSighting = mostRecentReal
+    ? {
+        zone: backendZones.find((zone) => zone.id === mostRecentReal.zone_id)?.slug ?? lastSighting.zone,
+        reporter: mostRecentReal.reporter_email,
+        time: new Date(mostRecentReal.created_at).toLocaleTimeString(),
+      }
+    : lastSighting;
 
   // ---------------------------------------------------------
   // HEAT MAP
@@ -180,7 +192,7 @@ function handleGuess() {
   // Spend 1 point
   setPoints((previous) => previous - 1);
 
-  const correct = guessZone === lastSighting.zone;
+  const correct = guessZone === latestSighting.zone;
 
   if (correct) {
     // Correct answer → +3 points
@@ -556,7 +568,7 @@ function handleGuess() {
               className="map-svg"
             />
 
-            {selectedZone === lastSighting.zone && (
+            {selectedZone === latestSighting.zone && (
               <img
                 src={cat}
                 alt="Moulinette"
@@ -575,15 +587,15 @@ function handleGuess() {
             </h2>
 
             <p className="mt-2">
-              Zone: {lastSighting.zone}
+              Zone: {latestSighting.zone}
             </p>
 
             <p>
-              Reporter: {lastSighting.reporter}
+              Reporter: {latestSighting.reporter}
             </p>
 
             <p>
-              Time: {lastSighting.time}
+              Time: {latestSighting.time}
             </p>
 
           </div>
