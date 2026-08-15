@@ -153,6 +153,7 @@ async def test_search_users_matches_display_name_case_insensitively(users_app, u
     assert response.status_code == 200
     results = response.json()
     assert [r["display_name"] for r in results] == ["Bob Builder"]
+    assert results[0]["email"] == "bob@example.com"
 
 
 @pytest.mark.asyncio
