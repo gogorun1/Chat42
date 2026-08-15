@@ -96,7 +96,6 @@ export type LeaderboardEntry = {
   display_name: string | null
   avatar_url: string | null
   sighting_count: number
-  correct_predictions: number
   guess_points: number
   score: number
 }
@@ -105,12 +104,4 @@ export type GuessResult = {
   correct: boolean
   guess_points: number
   actual_zone_id: number
-}
-
-export type Prediction = {
-  id: number
-  zone_id: number
-  target_date: string
-  is_correct: boolean | null
-  created_at: string
 }
