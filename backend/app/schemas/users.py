@@ -27,5 +27,6 @@ class FriendListRead(BaseModel):
 
 class UserSearchResult(BaseModel):
     id: int
+    email: str
     display_name: str | None
     avatar_url: str | None

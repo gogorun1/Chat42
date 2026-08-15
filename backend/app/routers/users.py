@@ -74,7 +74,7 @@ async def search_users(
         .limit(20)
     )
     return [
-        UserSearchResult(id=u.id, display_name=u.display_name, avatar_url=u.avatar_url)
+        UserSearchResult(id=u.id, email=u.email, display_name=u.display_name, avatar_url=u.avatar_url)
         for u in result.scalars().all()
     ]
 
