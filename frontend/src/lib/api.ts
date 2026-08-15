@@ -62,6 +62,23 @@ export type Sighting = {
   zone: Zone
 }
 
+export type SearchSighting = {
+  id: number
+  zone_id: number
+  zone_name: string
+  reporter_id: number
+  reporter_email: string
+  image_url: string
+  created_at: string
+}
+
+export type SightingSearchResult = {
+  items: SearchSighting[]
+  total: number
+  page: number
+  page_size: number
+}
+
 export type Badge = {
   code: string
   name: string
