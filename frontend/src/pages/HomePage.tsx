@@ -1,4 +1,3 @@
-import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import CampusMap from "../components/42map";
 
@@ -30,13 +29,6 @@ export function HomePage() {
       </div>
 
       <CampusMap />
-
-      <Link
-        to="/upload"
-        className="mt-6 inline-block rounded-lg bg-amber-500 p-4 font-semibold text-black transition hover:bg-amber-400"
-      >
-        ➕ Report a cat sighting
-      </Link>
     </div>
   );
 }
