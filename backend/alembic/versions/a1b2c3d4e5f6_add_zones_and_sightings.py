@@ -17,11 +17,20 @@ branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
 CAMPUS_ZONES = [
-    ("a-block", "A Block"),
-    ("b-block", "B Block"),
-    ("c-block", "C Block"),
-    ("cluster", "Cluster"),
-    ("outside", "Outside Campus"),
+    ("entrance", "42 Entrance"),
+    ("cantine_m1", "CantiSkate"),
+    ("cantine_0", "Shokudo"),
+    ("cantine_1", "La Piscine"),
+    ("f0", "F0"),
+    ("f1", "F1"),
+    ("f1b", "F1b"),
+    ("f2", "F2"),
+    ("f4", "F4"),
+    ("f6", "F6"),
+    ("playroom", "Cafe avant la fin du monde"),
+    ("roof2", "Terrase(2)"),
+    ("roof3", "Terrase(3)"),
+    ("stairs", "Stairs")
 ]
 
 
