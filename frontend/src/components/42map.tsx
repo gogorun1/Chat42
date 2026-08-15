@@ -219,8 +219,10 @@ async function handleGuess() {
 
   setGuessSubmitting(false);
 
-  // Show the result briefly, then reveal the map
+  // Show the result briefly, then reveal the map open to where the cat
+  // actually was
   setTimeout(() => {
+    setSelectedZone(latestSighting.zone);
     setPage("map");
     setGuessMessage("");
     setGuessZone("");
