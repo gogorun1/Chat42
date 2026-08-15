@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+
+import { api, ApiError, Zone } from "../lib/api";
 
 import building42 from "../assets/maps/building.svg";
 import cantineM1 from "../assets/maps/cantine_m1.svg";
@@ -127,9 +129,17 @@ export default function CampusMap() {
 
   // Report state
   const [reportZone, setReportZone] = useState("");
-  const [reportTime, setReportTime] = useState("");
   const [reportPhoto, setReportPhoto] = useState<File | null>(null);
   const [reportMessage, setReportMessage] = useState("");
+  const [reportSubmitting, setReportSubmitting] = useState(false);
+  const [backendZones, setBackendZones] = useState<Zone[]>([]);
+
+  useEffect(() => {
+    api
+      .get<Zone[]>("/sightings/zones")
+      .then(setBackendZones)
+      .catch(() => undefined);
+  }, []);
 
   const currentZone = zones[selectedZone];
 
@@ -189,32 +199,44 @@ function handleGuess() {
   // REPORT
   // ---------------------------------------------------------
 
-  function handleReport() {
+  async function handleReport() {
     if (!reportZone) {
       setReportMessage("📍 Please choose where you saw Moulinette.");
       return;
     }
 
-    if (!reportTime) {
-      setReportMessage("⏰ Please choose when you saw Moulinette.");
+    if (!reportPhoto) {
+      setReportMessage("📷 Please attach a photo.");
       return;
     }
 
-    // For now this only confirms the report locally.
-    // Later this function should call your backend API.
-    console.log("CAT REPORT", {
-      zone: reportZone,
-      time: reportTime,
-      photo: reportPhoto,
-    });
+    const backendZone = backendZones.find((zone) => zone.slug === reportZone);
+    if (!backendZone) {
+      setReportMessage("😿 That location isn't set up on the server yet.");
+      return;
+    }
 
-    setReportMessage(
-      "🐱 Thank you! Your Moulinette sighting has been reported."
-    );
+    setReportSubmitting(true);
+    setReportMessage("");
 
-    setReportZone("");
-    setReportTime("");
-    setReportPhoto(null);
+    const formData = new FormData();
+    formData.append("zone_id", String(backendZone.id));
+    formData.append("image", reportPhoto);
+
+    try {
+      await api.postForm("/sightings/", formData);
+      setReportMessage(
+        "🐱 Thank you! Your Moulinette sighting has been reported."
+      );
+      setReportZone("");
+      setReportPhoto(null);
+    } catch (err) {
+      setReportMessage(
+        err instanceof ApiError ? `😿 ${err.message}` : "😿 Failed to report sighting."
+      );
+    } finally {
+      setReportSubmitting(false);
+    }
   }
 
   // =========================================================
@@ -428,19 +450,6 @@ function handleGuess() {
               ))}
             </select>
 
-            {/* TIME */}
-
-            <label className="mt-6 block text-sm font-semibold text-slate-300">
-              ⏰ When did you see her?
-            </label>
-
-            <input
-              type="datetime-local"
-              value={reportTime}
-              onChange={(e) => setReportTime(e.target.value)}
-              className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-800 p-3 text-white"
-            />
-
             {/* PHOTO */}
 
             <label className="mt-6 block text-sm font-semibold text-slate-300">
@@ -466,9 +475,10 @@ function handleGuess() {
 
             <button
               onClick={handleReport}
-              className="mt-8 w-full rounded-xl bg-amber-400 px-5 py-4 font-bold text-slate-950 hover:bg-amber-300"
+              disabled={reportSubmitting}
+              className="mt-8 w-full rounded-xl bg-amber-400 px-5 py-4 font-bold text-slate-950 hover:bg-amber-300 disabled:cursor-not-allowed disabled:opacity-40"
             >
-              🐱 Submit sighting
+              {reportSubmitting ? "Submitting…" : "🐱 Submit sighting"}
             </button>
 
             {reportMessage && (
