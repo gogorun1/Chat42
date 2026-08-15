@@ -120,7 +120,7 @@ Target: 14 mandatory points + up to 5 bonus points (19 total). Status reflects w
 
 <!-- TODO: every member fills in their own section as they contribute. -->
 
-**jili** — F1 (Platform) & F8 (Search & Analytics)
+**jili** — F1 (Platform) & F10
 - Backend/frontend scaffolding (FastAPI + React/Vite/Tailwind), Docker Compose setup with non-root containers.
 - Email/password authentication (bcrypt, JWT-in-cookie) and 42 OAuth 2.0 login, including account auto-linking by email.
 - PostgreSQL + SQLAlchemy async + Alembic migrations.
