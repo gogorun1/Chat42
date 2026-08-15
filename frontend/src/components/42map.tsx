@@ -586,7 +586,7 @@ async function handleGuess() {
               <img
                 src={cat}
                 alt="Moulinette"
-                className="cat-icon"
+                className="cat-icon cat-icon-map"
               />
             )}
 
