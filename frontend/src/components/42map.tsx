@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 
-import { api, ApiError, SearchSighting, SightingSearchResult, Zone } from "../lib/api";
+import { api, ApiError, GuessResult, SearchSighting, SightingSearchResult, Zone } from "../lib/api";
+import { useAuth } from "../context/AuthContext";
 
 import building42 from "../assets/maps/building.svg";
 import cantineM1 from "../assets/maps/cantine_m1.svg";
@@ -115,16 +116,20 @@ export  const zones: any = {
 };
 
 export default function CampusMap() {
+  const { user, refreshUser } = useAuth();
   const [page, setPage] = useState("intro");
 
   const [selectedZone, setSelectedZone] = useState(lastSighting.zone);
 
-  // Player points
-  const [points, setPoints] = useState(120);
+  // Player points — persisted server-side on the user (see
+  // POST /gamification/guess), not local state, so it survives a refresh
+  // and feeds into /gamification/leaderboard's score.
+  const points = user?.guess_points ?? 0;
 
   // Guess state
   const [guessZone, setGuessZone] = useState("");
   const [guessMessage, setGuessMessage] = useState("");
+  const [guessSubmitting, setGuessSubmitting] = useState(false);
 
   // Report state
   const [reportZone, setReportZone] = useState("");
@@ -178,7 +183,7 @@ export default function CampusMap() {
   // GUESS
   // ---------------------------------------------------------
 
-function handleGuess() {
+async function handleGuess() {
   if (!guessZone) {
     setGuessMessage("🐱 Choose a location first!");
     return;
@@ -189,23 +194,30 @@ function handleGuess() {
     return;
   }
 
-  // Spend 1 point
-  setPoints((previous) => previous - 1);
-
-  const correct = guessZone === latestSighting.zone;
-
-  if (correct) {
-    // Correct answer → +3 points
-    setPoints((previous) => previous + 3);
-
-    setGuessMessage(
-      "🎉 Meeeow! You found me! I was hiding right there!  +3 points!"
-    );
-  } else {
-    setGuessMessage(
-      "😿 Meow… not here! Better luck next time!"
-    );
+  const backendZone = backendZones.find((zone) => zone.slug === guessZone);
+  if (!backendZone) {
+    setGuessMessage("😿 That location isn't set up on the server yet.");
+    return;
   }
+
+  setGuessSubmitting(true);
+
+  try {
+    const result = await api.post<GuessResult>("/gamification/guess", { zone_id: backendZone.id });
+    await refreshUser();
+
+    setGuessMessage(
+      result.correct
+        ? "🎉 Meeeow! You found me! I was hiding right there!  +3 points!"
+        : "😿 Meow… not here! Better luck next time!"
+    );
+  } catch (err) {
+    setGuessMessage(err instanceof ApiError ? `😿 ${err.message}` : "😿 Failed to submit your guess.");
+    setGuessSubmitting(false);
+    return;
+  }
+
+  setGuessSubmitting(false);
 
   // Show the result briefly, then reveal the map
   setTimeout(() => {
@@ -398,10 +410,10 @@ function handleGuess() {
 
             <button
               onClick={handleGuess}
-              disabled={!guessZone || points < 1}
+              disabled={!guessZone || points < 1 || guessSubmitting}
               className="mt-6 w-full rounded-xl bg-amber-400 px-5 py-4 font-bold text-slate-950 transition hover:bg-amber-300 disabled:cursor-not-allowed disabled:opacity-40"
             >
-              🎯 Confirm my guess — ⭐ 1 point
+              {guessSubmitting ? "Confirming…" : "🎯 Confirm my guess — ⭐ 1 point"}
             </button>
 
             {guessMessage && (
