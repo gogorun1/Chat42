@@ -1,6 +1,6 @@
-from datetime import date, datetime
+from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel
 
 
 class BadgeRead(BaseModel):
@@ -15,23 +15,8 @@ class LeaderboardEntry(BaseModel):
     display_name: str | None
     avatar_url: str | None
     sighting_count: int
-    correct_predictions: int
     guess_points: int
     score: int
-
-
-class PredictionCreate(BaseModel):
-    zone_id: int
-
-
-class PredictionRead(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: int
-    zone_id: int
-    target_date: date
-    is_correct: bool | None
-    created_at: datetime
 
 
 class GuessCreate(BaseModel):
