@@ -25,7 +25,6 @@ CAMPUS_ZONES = [
     ("f1", "F1"),
     ("f1b", "F1b"),
     ("f2", "F2"),
-    ("f4", "F4"),
     ("f6", "F6"),
     ("playroom", "Cafe avant la fin du monde"),
     ("roof2", "Terrase(2)"),
