@@ -110,6 +110,22 @@ class Prediction(Base):
 - Profile 页面加"我的目击历史"区块,复用 `GET /sightings/`,按时间倒序展示
   缩略图 + zone + 时间。
 
+**实现记录(2026-08-15)**:新增独立页面 `frontend/src/pages/GamificationPage.tsx`
+(路由 `/gamification`,`Layout.tsx` 导航栏加了入口),包含竞猜表单 + 徽章展示 +
+排行榜,全部接的是本 ADR 的真实端点。`ProfilePage.tsx` 加了"My sighting
+history"区块,复用 `GET /sightings/`。
+
+**发现一个需要和 F4 对齐的点**:`frontend/src/components/42map.tsx`(F4 的地图
+组件)里**已经有**一套"guess"(猜猫在哪)、"ranking"(排行榜)、"history"
+(目击历史)、"heat"(热力图)的 UI——但数据全是本地 mock(`../data/cat`、
+`../data/sighting`,zone id 是 `entrance`/`f0`/`f1` 这种,不对应后端
+`zones` 表的 `slug`),竞猜逻辑也是纯前端算分,完全没接后端。这次 F7 的实现
+**没有碰这个文件**,按你的要求先不找 F4 协调——但这意味着现在 app 里同时存在
+两套"猜猫"体验:`/gamification` 是接了真实后端的,`42map.tsx` 里的是纯本地
+假数据的。后面要么把 `42map.tsx` 的 mock 逻辑换成调用
+`/gamification/predictions`、`/gamification/leaderboard`,要么两边保留但要
+避免用户困惑(比如两处积分对不上)。这个需要你和 F4 那边对一下打算怎么处理。
+
 ## 不做的部分
 
 - 不引入定时任务/cron 容器来结算竞猜——懒结算,请求到达时现算,足够满足
@@ -151,6 +167,9 @@ class Prediction(Base):
 5. ~~`nginx.conf` 加转发;后端测试(`test_gamification_router.py`)。~~
    **已完成**,7 条端点测试全过;另外手动 curl 走了一遍完整 HTTPS 链路
    (signup → 提交竞猜 → 重复提交 409 → 查询列表 → 查排行榜/成就)。
-6. 前端:徽章/排行榜页 + 竞猜卡片 + Profile 页"我的目击历史"区块。**待做**。
+6. ~~前端:徽章/排行榜页 + 竞猜卡片 + Profile 页"我的目击历史"区块。~~
+   **已完成**(`GamificationPage.tsx` + `ProfilePage.tsx` 改动),TS 类型检
+   查通过(排除已知无关的 `Plot.ts` 缺失问题)。
 7. 浏览器手动验证:攒够条件解锁徽章、排行榜排序正确、提交竞猜次日结算。
-   **待做**(依赖第 6 步的前端页面)。
+   **待做**——这一步我(Claude)没有浏览器可以操作,需要你本人登录点一遍
+   `/gamification` 和 profile 页面确认视觉/交互没问题。
