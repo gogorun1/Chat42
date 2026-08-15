@@ -25,6 +25,7 @@ type FriendList = {
 
 type UserSearchResult = {
   id: number
+  email: string
   display_name: string | null
   avatar_url: string | null
 }
@@ -199,7 +200,10 @@ function OwnProfile() {
                 <li key={result.id} className="flex items-center justify-between py-2 text-sm">
                   <span className="flex items-center gap-2">
                     <Avatar url={result.avatar_url} size={32} />
-                    {result.display_name ?? `User #${result.id}`}
+                    <span className="flex flex-col">
+                      <span>{result.display_name ?? `User #${result.id}`}</span>
+                      <span className="text-xs text-slate-500">{result.email}</span>
+                    </span>
                   </span>
                   {isFriend ? (
                     <span className="text-xs text-slate-500">Already friends</span>
