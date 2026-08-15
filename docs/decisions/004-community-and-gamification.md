@@ -230,3 +230,17 @@ DB 里没有任何 `sightings` 引用旧 zone,唯一一条测试用的 `predicti
 没有真实数据时"的 fallback(比如刚部署、一条 sighting 都没有的时候),不
 再是主数据源。首页"⭐ pts"/"🏆 Rank"和 Gamification 页排行榜、地图里的
 Ranking tab,现在三处显示的是同一个数字。
+
+## 收尾(2026-08-15,当天晚些时候):"猜明天"竞猜功能整个删掉了
+
+第 152 行那条"留着还是砍掉,还没定"的记录,拍板结果是**砍掉**:确认这部
+分从来没被实际用到的 Guess UI 调用过之后,整条链路(`predictions` 表、
+`Prediction` model、`PredictionCreate`/`PredictionRead` schema、
+`POST/GET /gamification/predictions`、`settle_pending_predictions`
+service、`GamificationPage.tsx` 里的竞猜表单/列表)全部删除,新增 migration
+`b8c9d0e1f2a3_drop_predictions_table.py` 把表也删了(`user_badges` 没动)。
+`leaderboard` 的 `score` 公式简化成 `目击数 + guess_points`,不再有
+`correct_predictions` 字段。88 个后端测试全过(原93个,删掉5个测这部分的)。
+
+现在整个项目里"猜猫"只有一套机制:F4 的即时判定(`POST /gamification/guess`
++ `users.guess_points`),不再有第二套并存的东西。
