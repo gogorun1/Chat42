@@ -1,6 +1,6 @@
 import { ChangeEvent, FormEvent, useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
-import { api, ApiError, Sighting } from '../lib/api'
+import { api, ApiError, Badge, Sighting } from '../lib/api'
 import { useAuth } from '../context/AuthContext'
 
 type PublicProfile = {
@@ -68,6 +68,7 @@ function OwnProfile() {
   const [searchError, setSearchError] = useState<string | null>(null)
   const [sentRequests, setSentRequests] = useState<Set<number>>(new Set())
   const [mySightings, setMySightings] = useState<Sighting[] | null>(null)
+  const [badges, setBadges] = useState<Badge[] | null>(null)
 
   function loadFriends() {
     api.get<FriendList>('/users/me/friends').then(setFriendList).catch(() => undefined)
@@ -77,6 +78,10 @@ function OwnProfile() {
 
   useEffect(() => {
     api.get<Sighting[]>('/sightings/').then(setMySightings).catch(() => undefined)
+  }, [])
+
+  useEffect(() => {
+    api.get<Badge[]>('/gamification/achievements').then(setBadges).catch(() => undefined)
   }, [])
 
   async function handleSaveName(event: FormEvent) {
@@ -302,6 +307,22 @@ function OwnProfile() {
           {mySightings && mySightings.length === 0 && (
             <li className="py-2 text-sm text-slate-500">No sightings reported yet.</li>
           )}
+        </ul>
+      </section>
+
+      <section className="rounded-xl border border-slate-800 bg-slate-900 p-6">
+        <h2 className="mb-4 text-lg font-semibold">Badges</h2>
+        {badges && badges.length === 0 && (
+          <p className="text-sm text-slate-500">No badges yet — go log a sighting!</p>
+        )}
+        <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+          {badges?.map((badge) => (
+            <li key={badge.code} className="rounded-lg border border-slate-800 bg-slate-950 p-3 text-center">
+              <p className="text-2xl">🏅</p>
+              <p className="mt-1 text-sm font-medium">{badge.name}</p>
+              <p className="mt-1 text-xs text-slate-500">{badge.description}</p>
+            </li>
+          ))}
         </ul>
       </section>
     </div>
