@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import { api, ApiError, GuessResult, SearchSighting, SightingSearchResult, Zone } from "../lib/api";
+import { api, ApiError, Diary, GuessResult, SearchSighting, SightingSearchResult, Zone } from "../lib/api";
 import { useAuth } from "../context/AuthContext";
 
 import building42 from "../assets/maps/building.svg";
@@ -138,6 +138,8 @@ export default function CampusMap() {
   const [reportSubmitting, setReportSubmitting] = useState(false);
   const [backendZones, setBackendZones] = useState<Zone[]>([]);
   const [campusSightings, setCampusSightings] = useState<SearchSighting[]>([]);
+  const [diary, setDiary] = useState<Diary | null>(null);
+  const [diaryError, setDiaryError] = useState<string | null>(null);
 
   function loadCampusSightings() {
     api
@@ -152,6 +154,10 @@ export default function CampusMap() {
       .then(setBackendZones)
       .catch(() => undefined);
     loadCampusSightings();
+    api
+      .get<Diary>("/ai/diary")
+      .then(setDiary)
+      .catch((err) => setDiaryError(err instanceof ApiError ? err.message : "Failed to load diary"));
   }, []);
 
   const currentZone = zones[selectedZone];
@@ -698,13 +704,29 @@ async function handleGuess() {
             📖 Moulinette's Diary
           </h1>
 
-          <p className="mt-6 text-slate-300">
-            Today I explored the campus...
-          </p>
+          {diary && (
+            <p className="mt-2 text-sm text-slate-500">
+              {diary.date}
+            </p>
+          )}
 
-          <p className="mt-2">
-            Meow 🐱
-          </p>
+          {diaryError && (
+            <p className="mt-6 text-red-400">
+              😿 {diaryError}
+            </p>
+          )}
+
+          {!diary && !diaryError && (
+            <p className="mt-6 text-slate-400">
+              Moulinette is writing today's entry…
+            </p>
+          )}
+
+          {diary && (
+            <p className="mt-6 whitespace-pre-line text-slate-300">
+              {diary.content}
+            </p>
+          )}
 
         </div>
       )}

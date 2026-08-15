@@ -79,6 +79,11 @@ export type SightingSearchResult = {
   page_size: number
 }
 
+export type Diary = {
+  date: string
+  content: string
+}
+
 export type Badge = {
   code: string
   name: string
