@@ -126,6 +126,17 @@ history"区块,复用 `GET /sightings/`。
 `/gamification/predictions`、`/gamification/leaderboard`,要么两边保留但要
 避免用户困惑(比如两处积分对不上)。这个需要你和 F4 那边对一下打算怎么处理。
 
+**已解决的前置阻塞项(2026-08-15)**:`zones` 表原本的 5 个占位 zone
+(a-block/b-block/c-block/cluster/outside,F2 migration 种的)已经换成
+F4 地图里真实的 13 个 zone(migration
+`f6a7b8c9d0e1_replace_zones_with_real_campus_map.py`),slug 直接用她
+`42map.tsx` 里 `zones` 对象的 key(`entrance`/`cantine_m1`/`f0`/`f1`/…),
+她本地的 zone 元数据(图片、楼层)可以按 slug 对上后端返回的 `id`。当时
+DB 里没有任何 `sightings` 引用旧 zone,唯一一条测试用的 `predictions` 行随
+外键 `ON DELETE CASCADE` 一起被清掉了,不是数据迁移,是直接换。现在
+`GET /sightings/zones` 返回的就是这 13 个真实 zone(手动 curl 验证过)。
+guess-now-vs-guess-tomorrow 的规则分歧仍然没解决,需要当面/开会确认。
+
 ## 不做的部分
 
 - 不引入定时任务/cron 容器来结算竞猜——懒结算,请求到达时现算,足够满足
