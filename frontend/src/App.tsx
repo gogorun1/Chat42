@@ -6,6 +6,7 @@ import { AdminPage } from './pages/AdminPage'
 import { HomePage } from './pages/HomePage'
 import { LoginPage } from './pages/LoginPage'
 import { PrivacyPolicyPage } from './pages/PrivacyPolicyPage'
+import { ProfilePage } from './pages/ProfilePage'
 import { SignupPage } from './pages/SignupPage'
 import { TermsOfServicePage } from './pages/TermsOfServicePage'
 import { UploadPage } from './pages/UploadPage'
@@ -17,6 +18,8 @@ function App() {
         <Route element={<ProtectedRoute />}>
           <Route path="/" element={<HomePage />} />
           <Route path="/upload" element={<UploadPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/profile/:id" element={<ProfilePage />} />
           <Route element={<AdminRoute />}>
             <Route path="/admin" element={<AdminPage />} />
           </Route>
