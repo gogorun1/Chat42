@@ -21,9 +21,11 @@ class NotificationType(str, enum.Enum):
     SIGHTING_NEARBY = "sighting_nearby"
     SIGHTING_APPROVED = "sighting_approved"
     SIGHTING_REJECTED = "sighting_rejected"
+    SIGHTING_REMOVED = "sighting_removed"      # NEW: moderator/admin direct delete
     GUESS_RESULT = "guess_result"
     BADGE_EARNED = "badge_earned"
     FRIEND_REQUEST = "friend_request"
+    ROLE_CHANGED = "role_changed"              # NEW: admin changes a user's role
     SYSTEM = "system"
 
 class Notification(Base):

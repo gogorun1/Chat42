@@ -31,100 +31,28 @@ import { lastSighting } from "../data/cat";
 
 import GameMenu from "./GameMenu";
 
-export  const zones: any = {
-  entrance: {
-    id: "entrance",
-    name: "42 Entrance",
-    floor: "Entrance",
-    image: building42,
-  },
-
-  cantine_m1: {
-    id: "cantine_m1",
-    name: "CantiSkate",
-    floor: "-1",
-    image: cantineM1,
-  },
-
-  cantine_0: {
-    id: "cantine_0",
-    name: "Shokudo",
-    floor: "0",
-    image: cantine0,
-  },
-
-  cantine_1: {
-    id: "cantine_1",
-    name: "La Piscine",
-    floor: "0",
-    image: cantine1,
-  },
-
-  f0: {
-    id: "f0",
-    name: "F0",
-    floor: "0",
-    image: f0,
-  },
-
-  f1: {
-    id: "f1",
-    name: "F1",
-    floor: "1",
-    image: f1,
-  },
-
-  f1b: {
-    id: "f1b",
-    name: "F1b",
-    floor: "2",
-    image: f1b,
-  },
-
-  f2: {
-    id: "f2",
-    name: "F2",
-    floor: "2",
-    image: f2,
-  },
-
-  f6: {
-    id: "f6",
-    name: "F6",
-    floor: "6",
-    image: f6,
-  },
-
-  playroom: {
-    id: "playroom",
-    name: "Cafe avant la fin du monde",
-    floor: "2",
-    image: play,
-  },
-
-  roof2: {
-    id: "roof2",
-    name: "Terrase (2)",
-    floor: "2",
-    image: roof2,
-  },
-
-  roof3: {
-    id: "roof3",
-    name: "Terrase (3)",
-    floor: "3",
-    image: roof3,
-  },
-
-  stairs: {
-    id: "stairs",
-    name: "Stairs",
-    floor: "All",
-    image: stairs,
-  },
+export const zones: any = {
+  entrance: { id: "entrance", name: "42 Entrance", floor: "Entrance", image: building42 },
+  cantine_m1: { id: "cantine_m1", name: "CantiSkate", floor: "-1", image: cantineM1 },
+  cantine_0: { id: "cantine_0", name: "Shokudo", floor: "0", image: cantine0 },
+  cantine_1: { id: "cantine_1", name: "La Piscine", floor: "0", image: cantine1 },
+  f0: { id: "f0", name: "F0", floor: "0", image: f0 },
+  f1: { id: "f1", name: "F1", floor: "1", image: f1 },
+  f1b: { id: "f1b", name: "F1b", floor: "2", image: f1b },
+  f2: { id: "f2", name: "F2", floor: "2", image: f2 },
+  f6: { id: "f6", name: "F6", floor: "6", image: f6 },
+  playroom: { id: "playroom", name: "Cafe avant la fin du monde", floor: "2", image: play },
+  roof2: { id: "roof2", name: "Terrase(2)", floor: "2", image: roof2 },
+  roof3: { id: "roof3", name: "Terrase(3)", floor: "3", image: roof3 },
+  stairs: { id: "stairs", name: "Stairs", floor: "All", image: stairs },
 };
 
-export default function CampusMap() {
+type CampusMapProps = {
+  leaderboard: LeaderboardEntry[] | null;
+  loadLeaderboard: () => void;
+};
+
+export default function CampusMap({ leaderboard, loadLeaderboard }: CampusMapProps) {
   const { user, refreshUser } = useAuth();
   const [page, setPage] = useState("intro");
 
@@ -149,19 +77,16 @@ export default function CampusMap() {
   const [campusSightings, setCampusSightings] = useState<SearchSighting[]>([]);
   const [diary, setDiary] = useState<Diary | null>(null);
   const [diaryError, setDiaryError] = useState<string | null>(null);
-  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[] | null>(null);
 
   function loadCampusSightings() {
+    // FIX: was missing the /api prefix -- confirmed via backend logs that
+    // the real route is /api/search/sightings, not /search/sightings.
+    // Every other call in this file (zones, ai/diary, sightings/,
+    // gamification/guess) is correctly unprefixed per those same logs;
+    // search is the one endpoint that's mounted under /api.
     api
-      .get<SightingSearchResult>("/search/sightings?page_size=100&sort_by=created_at&sort_order=desc")
+      .get<SightingSearchResult>("/api/search/sightings?page_size=100&sort_by=created_at&sort_order=desc")
       .then((result) => setCampusSightings(result.items))
-      .catch(() => undefined);
-  }
-
-  function loadLeaderboard() {
-    api
-      .get<LeaderboardEntry[]>("/gamification/leaderboard?limit=100")
-      .then(setLeaderboard)
       .catch(() => undefined);
   }
 
@@ -175,19 +100,18 @@ export default function CampusMap() {
       .get<Diary>("/ai/diary")
       .then(setDiary)
       .catch((err) => setDiaryError(err instanceof ApiError ? err.message : "Failed to load diary"));
-    loadLeaderboard();
   }, []);
 
   const currentZone = zones[selectedZone];
 
   // Real "last seen" — most recent real sighting, mapped back to the local
-  // zone/reporter/time shape F4's Guess flow and Last Seen card already use.
+  // zone/reporter/time shape the Guess flow and Last Seen card already use.
   // Falls back to the mock lastSighting until a real sighting exists.
   const mostRecentReal = campusSightings[0];
   const latestSighting = mostRecentReal
     ? {
         zone: backendZones.find((zone) => zone.id === mostRecentReal.zone_id)?.slug ?? lastSighting.zone,
-        reporter: mostRecentReal.reporter_email,
+        reporter: mostRecentReal.reporter,
         time: new Date(mostRecentReal.created_at).toLocaleTimeString(),
       }
     : lastSighting;
@@ -207,53 +131,52 @@ export default function CampusMap() {
   // GUESS
   // ---------------------------------------------------------
 
-async function handleGuess() {
-  if (!guessZone) {
-    setGuessMessage("🐱 Choose a location first!");
-    return;
-  }
+  async function handleGuess() {
+    if (!guessZone) {
+      setGuessMessage("🐱 Choose a location first!");
+      return;
+    }
 
-  if (points < 1) {
-    setGuessMessage("😿 You don't have enough points.");
-    return;
-  }
+    if (points < 1) {
+      setGuessMessage("😿 You don't have enough points.");
+      return;
+    }
 
-  const backendZone = backendZones.find((zone) => zone.slug === guessZone);
-  if (!backendZone) {
-    setGuessMessage("😿 That location isn't set up on the server yet.");
-    return;
-  }
+    const backendZone = backendZones.find((zone) => zone.slug === guessZone);
+    if (!backendZone) {
+      setGuessMessage("😿 That location isn't set up on the server yet.");
+      return;
+    }
 
-  setGuessSubmitting(true);
+    setGuessSubmitting(true);
 
-  try {
-    const result = await api.post<GuessResult>("/gamification/guess", { zone_id: backendZone.id });
-    await refreshUser();
-    loadLeaderboard();
+    try {
+      const result = await api.post<GuessResult>("/gamification/guess", { zone_id: backendZone.id });
+      await refreshUser();
+      loadLeaderboard();
 
-    setGuessMessage(
-      result.correct
-        ? "🎉 Meeeow! You found me! I was hiding right there!  +3 points!"
-        : "😿 Meow… not here! Better luck next time!"
-    );
-  } catch (err) {
-    setGuessMessage(err instanceof ApiError ? `😿 ${err.message}` : "😿 Failed to submit your guess.");
+      setGuessMessage(
+        result.correct
+          ? "🎉 Meeeow! You found me! I was hiding right there!  +3 points!"
+          : "😿 Meow… not here! Better luck next time!"
+      );
+    } catch (err) {
+      setGuessMessage(err instanceof ApiError ? `😿 ${err.message}` : "😿 Failed to submit your guess.");
+      setGuessSubmitting(false);
+      return;
+    }
+
     setGuessSubmitting(false);
-    return;
+
+    // Show the result briefly, then reveal the map open to where the cat
+    // actually was
+    setTimeout(() => {
+      setSelectedZone(latestSighting.zone);
+      setPage("map");
+      setGuessMessage("");
+      setGuessZone("");
+    }, 1800);
   }
-
-  setGuessSubmitting(false);
-
-  // Show the result briefly, then reveal the map open to where the cat
-  // actually was
-  setTimeout(() => {
-    setSelectedZone(latestSighting.zone);
-    setPage("map");
-    setGuessMessage("");
-    setGuessZone("");
-  }, 1800);
-}
-
 
   // ---------------------------------------------------------
   // REPORT
@@ -285,17 +208,14 @@ async function handleGuess() {
 
     try {
       await api.postForm("/sightings/", formData);
-      setReportMessage(
-        "🐱 Thank you! Your Moulinette sighting has been reported."
-      );
+      setReportMessage("🐱 Thank you! Your Moulinette sighting has been reported.");
+      await refreshUser();
       loadCampusSightings();
       loadLeaderboard();
       setReportZone("");
       setReportPhoto(null);
     } catch (err) {
-      setReportMessage(
-        err instanceof ApiError ? `😿 ${err.message}` : "😿 Failed to report sighting."
-      );
+      setReportMessage(err instanceof ApiError ? `😿 ${err.message}` : "😿 Failed to report sighting.");
     } finally {
       setReportSubmitting(false);
     }
@@ -310,39 +230,21 @@ async function handleGuess() {
       <div className="min-h-screen bg-slate-950 text-white">
         <main className="flex min-h-screen items-center justify-center px-6 py-12">
           <div className="w-full max-w-lg rounded-2xl border border-amber-400/40 bg-slate-900 p-8 text-center shadow-2xl">
-
-            {/* MOULINETTE ONLY HERE */}
-
             <div className="mb-6 flex justify-center">
               <div className="relative flex h-40 w-40 items-center justify-center">
                 <div className="cat-glow" />
-
-                <img
-                  src={cat}
-                  alt="Moulinette"
-                  className="cat-icon"
-                />
+                <img src={cat} alt="Moulinette" className="cat-icon" />
               </div>
             </div>
 
-            <p className="mb-2 text-sm font-semibold uppercase tracking-widest text-amber-400">
-              Moulinette
-            </p>
-
-            <h2 className="text-3xl font-bold">
-              Meow! 🐱
-            </h2>
-
-            <p className="mt-4 text-lg text-slate-300">
-              Do you want to guess where I am?
-            </p>
-
+            <p className="mb-2 text-sm font-semibold uppercase tracking-widest text-amber-400">Moulinette</p>
+            <h2 className="text-3xl font-bold">Meow! 🐱</h2>
+            <p className="mt-4 text-lg text-slate-300">Do you want to guess where I am?</p>
             <p className="mt-2 text-sm text-slate-500">
               Guessing costs 1 point. A correct answer gives you 3 points.
             </p>
 
             <div className="mt-8 grid gap-3 sm:grid-cols-2">
-
               <button
                 onClick={() => {
                   setGuessMessage("");
@@ -363,9 +265,7 @@ async function handleGuess() {
               >
                 😿 No thanks, show me
               </button>
-
             </div>
-
           </div>
         </main>
       </div>
@@ -379,41 +279,23 @@ async function handleGuess() {
   if (page === "guess") {
     return (
       <div className="min-h-screen bg-slate-950 px-6 py-8 text-white">
-
         <div className="mx-auto max-w-3xl">
-
           <div className="mb-8 flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-amber-400">
-                🎯 Where is Moulinette?
-              </h1>
-
-              <p className="mt-2 text-slate-400">
-                Choose the place where you think she is hiding.
-              </p>
+              <h1 className="text-3xl font-bold text-amber-400">🎯 Where is Moulinette?</h1>
+              <p className="mt-2 text-slate-400">Choose the place where you think she is hiding.</p>
             </div>
 
             <div className="text-right">
-              <p className="text-sm text-slate-400">
-                Your points
-              </p>
-
-              <p className="text-xl font-bold text-amber-400">
-                ⭐ {points}
-              </p>
+              <p className="text-sm text-slate-400">Your points</p>
+              <p className="text-xl font-bold text-amber-400">⭐ {points}</p>
             </div>
           </div>
 
-          {/* NO CAT IMAGE HERE */}
-
           <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6">
-
-            <h2 className="mb-5 text-xl font-semibold">
-              📍 Choose a location
-            </h2>
+            <h2 className="mb-5 text-xl font-semibold">📍 Choose a location</h2>
 
             <div className="grid gap-3 sm:grid-cols-2">
-
               {Object.keys(zones).map((zone) => (
                 <button
                   key={zone}
@@ -427,16 +309,10 @@ async function handleGuess() {
                       : "border-slate-700 bg-slate-800 hover:border-amber-400"
                   }`}
                 >
-                  <span className="font-semibold">
-                    {zones[zone].name}
-                  </span>
-
-                  <span className="mt-1 block text-sm text-slate-400">
-                    Floor {zones[zone].floor}
-                  </span>
+                  <span className="font-semibold">{zones[zone].name}</span>
+                  <span className="mt-1 block text-sm text-slate-400">Floor {zones[zone].floor}</span>
                 </button>
               ))}
-
             </div>
 
             <button
@@ -462,16 +338,10 @@ async function handleGuess() {
             >
               Skip and see the map
             </button>
-
           </div>
-
         </div>
 
-        <GameMenu
-          page={page}
-          setPage={setPage}
-        />
-
+        <GameMenu page={page} setPage={setPage} />
       </div>
     );
   }
@@ -483,34 +353,18 @@ async function handleGuess() {
   if (page === "report") {
     return (
       <div className="min-h-screen bg-slate-950 px-6 py-8 text-white">
-
         <div className="mx-auto max-w-2xl">
-
-          <h1 className="text-3xl font-bold text-amber-400">
-            ➕ Report Moulinette
-          </h1>
-
-          <p className="mt-2 text-slate-400">
-            Saw Moulinette? Tell the campus cat community!
-          </p>
+          <h1 className="text-3xl font-bold text-amber-400">➕ Report Moulinette</h1>
+          <p className="mt-2 text-slate-400">Saw Moulinette? Tell the campus cat community!</p>
 
           <div className="mt-8 rounded-2xl border border-slate-800 bg-slate-900 p-6">
-
-            {/* ZONE */}
-
-            <label className="block text-sm font-semibold text-slate-300">
-              📍 Where did you see her?
-            </label>
-
+            <label className="block text-sm font-semibold text-slate-300">📍 Where did you see her?</label>
             <select
               value={reportZone}
               onChange={(e) => setReportZone(e.target.value)}
               className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-800 p-3 text-white"
             >
-              <option value="">
-                Select a location
-              </option>
-
+              <option value="">Select a location</option>
               {Object.keys(zones).map((zone) => (
                 <option key={zone} value={zone}>
                   {zones[zone].name}
@@ -518,28 +372,15 @@ async function handleGuess() {
               ))}
             </select>
 
-            {/* PHOTO */}
-
-            <label className="mt-6 block text-sm font-semibold text-slate-300">
-              📷 Upload a photo
-            </label>
-
+            <label className="mt-6 block text-sm font-semibold text-slate-300">📷 Upload a photo</label>
             <input
               type="file"
               accept="image/*"
-              onChange={(e) =>
-                setReportPhoto(e.target.files?.[0] || null)
-              }
+              onChange={(e) => setReportPhoto(e.target.files?.[0] || null)}
               className="mt-2 block w-full rounded-xl border border-slate-700 bg-slate-800 p-3 text-sm"
             />
 
-            {reportPhoto && (
-              <p className="mt-2 text-sm text-slate-400">
-                📎 {reportPhoto.name}
-              </p>
-            )}
-
-            {/* SUBMIT */}
+            {reportPhoto && <p className="mt-2 text-sm text-slate-400">📎 {reportPhoto.name}</p>}
 
             <button
               onClick={handleReport}
@@ -554,16 +395,10 @@ async function handleGuess() {
                 {reportMessage}
               </div>
             )}
-
           </div>
-
         </div>
 
-        <GameMenu
-          page={page}
-          setPage={setPage}
-        />
-
+        <GameMenu page={page} setPage={setPage} />
       </div>
     );
   }
@@ -574,20 +409,11 @@ async function handleGuess() {
 
   return (
     <div className="min-h-screen bg-slate-950 px-6 py-8 pb-32 text-white">
-
-      {/* MAP */}
-
       {page === "map" && (
         <div>
-
-          <h1 className="mb-6 text-3xl font-bold text-amber-400">
-            🗺 Campus Map
-          </h1>
-
-          {/* ZONE SELECTOR */}
+          <h1 className="mb-6 text-3xl font-bold text-amber-400">🗺 Campus Map</h1>
 
           <div className="mb-6 flex flex-wrap gap-3">
-
             {Object.keys(zones).map((zone) => (
               <button
                 key={zone}
@@ -601,196 +427,87 @@ async function handleGuess() {
                 {zones[zone].name}
               </button>
             ))}
-
           </div>
-
-          {/* MAP IMAGE */}
 
           <div className="relative flex justify-center">
-
-            <img
-              src={currentZone.image}
-              alt={currentZone.name}
-              className="map-svg"
-            />
-
+            <img src={currentZone.image} alt={currentZone.name} className="map-svg" />
             {selectedZone === latestSighting.zone && (
-              <img
-                src={cat}
-                alt="Moulinette"
-                className="cat-icon cat-icon-map"
-              />
+              <img src={cat} alt="Moulinette" className="cat-icon cat-icon-map" />
             )}
-
           </div>
-
-          {/* LAST SEEN */}
 
           <div className="mt-6 rounded-xl border border-yellow-400 bg-slate-900 p-5">
-
-            <h2 className="text-xl text-yellow-400">
-              📍 Last Seen
-            </h2>
-
-            <p className="mt-2">
-              Zone: {latestSighting.zone}
-            </p>
-
-            <p>
-              Reporter: {latestSighting.reporter}
-            </p>
-
-            <p>
-              Time: {latestSighting.time}
-            </p>
-
+            <h2 className="text-xl text-yellow-400">📍 Last Seen</h2>
+            <p className="mt-2">Zone: {latestSighting.zone}</p>
+            <p>Reporter: {latestSighting.reporter}</p>
+            <p>Time: {latestSighting.time}</p>
           </div>
-
         </div>
       )}
 
-      {/* =====================================================
-          HISTORY
-      ===================================================== */}
-
       {page === "history" && (
         <div>
-
-          <h1 className="mb-6 text-3xl font-bold text-amber-400">
-            🐾 Cat History
-          </h1>
+          <h1 className="mb-6 text-3xl font-bold text-amber-400">🐾 Cat History</h1>
 
           {campusSightings.map((s) => (
-            <div
-              key={s.id}
-              className="mb-3 rounded-xl bg-slate-900 p-4"
-            >
+            <div key={s.id} className="mb-3 rounded-xl bg-slate-900 p-4">
               🐾 {s.zone_name}
-
               <br />
-
-              👤 {s.reporter_email}
-
+              👤 {s.reporter}
               <br />
-
               ⏰ {new Date(s.created_at).toLocaleString()}
             </div>
           ))}
 
-          {campusSightings.length === 0 && (
-            <p className="text-slate-500">No sightings reported yet.</p>
-          )}
-
+          {campusSightings.length === 0 && <p className="text-slate-500">No sightings reported yet.</p>}
         </div>
       )}
-
-      {/* =====================================================
-          HEAT MAP
-      ===================================================== */}
 
       {page === "heat" && (
         <div>
-
-          <h1 className="mb-6 text-3xl font-bold text-amber-400">
-            🔥 Cat Hotspots
-          </h1>
+          <h1 className="mb-6 text-3xl font-bold text-amber-400">🔥 Cat Hotspots</h1>
 
           {Object.keys(heat).map((zone) => (
-            <div
-              key={zone}
-              className="mb-3 rounded-xl bg-slate-900 p-4"
-            >
-              <p className="font-semibold">
-                {zones[zone]?.name || zone}
-              </p>
-
-              <p className="mt-2">
-                {"🐱".repeat(heat[zone])}
-              </p>
+            <div key={zone} className="mb-3 rounded-xl bg-slate-900 p-4">
+              <p className="font-semibold">{zones[zone]?.name || zone}</p>
+              <p className="mt-2">{"🐱".repeat(heat[zone])}</p>
             </div>
           ))}
-
         </div>
       )}
-
-      {/* =====================================================
-          DIARY
-      ===================================================== */}
 
       {page === "diary" && (
         <div className="rounded-xl bg-slate-900 p-6">
+          <h1 className="text-3xl font-bold text-amber-400">📖 Moulinette's Diary</h1>
 
-          <h1 className="text-3xl font-bold text-amber-400">
-            📖 Moulinette's Diary
-          </h1>
-
-          {diary && (
-            <p className="mt-2 text-sm text-slate-500">
-              {diary.date}
-            </p>
-          )}
-
-          {diaryError && (
-            <p className="mt-6 text-red-400">
-              😿 {diaryError}
-            </p>
-          )}
-
-          {!diary && !diaryError && (
-            <p className="mt-6 text-slate-400">
-              Moulinette is writing today's entry…
-            </p>
-          )}
-
-          {diary && (
-            <p className="mt-6 whitespace-pre-line text-slate-300">
-              {diary.content}
-            </p>
-          )}
-
+          {diary && <p className="mt-2 text-sm text-slate-500">{diary.date}</p>}
+          {diaryError && <p className="mt-6 text-red-400">😿 {diaryError}</p>}
+          {!diary && !diaryError && <p className="mt-6 text-slate-400">Moulinette is writing today's entry…</p>}
+          {diary && <p className="mt-6 whitespace-pre-line text-slate-300">{diary.content}</p>}
         </div>
       )}
 
-      {/* =====================================================
-          RANKING
-      ===================================================== */}
-
       {page === "ranking" && (
         <div className="rounded-xl bg-slate-900 p-6">
-
-          <h1 className="text-3xl font-bold text-amber-400">
-            🏆 Ranking
-          </h1>
+          <h1 className="text-3xl font-bold text-amber-400">🏆 Ranking</h1>
 
           <div className="mt-6 space-y-3">
-
             {leaderboard?.map((entry, index) => {
               const medal = ["🥇", "🥈", "🥉"][index] ?? `#${index + 1}`;
               const isMe = entry.user_id === user?.id;
               return (
-                <p
-                  key={entry.user_id}
-                  className={isMe ? "font-bold text-amber-300" : ""}
-                >
+                <p key={entry.user_id} className={isMe ? "font-bold text-amber-300" : ""}>
                   {medal} {entry.display_name ?? `User #${entry.user_id}`} — {entry.score} pts
                 </p>
               );
             })}
 
-            {leaderboard && leaderboard.length === 0 && (
-              <p className="text-slate-500">No one on the board yet.</p>
-            )}
-
+            {leaderboard && leaderboard.length === 0 && <p className="text-slate-500">No one on the board yet.</p>}
           </div>
-
         </div>
       )}
 
-      <GameMenu
-        page={page}
-        setPage={setPage}
-      />
-
+      <GameMenu page={page} setPage={setPage} />
     </div>
   );
 }

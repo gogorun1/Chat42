@@ -6,13 +6,16 @@ from sqlalchemy.orm import selectinload
 
 from app.core.database import get_db
 from app.core.deps import require_role
+from app.models.notification import NotificationType
 from app.models.sighting import Sighting
 from app.models.user import User, UserRole
 from app.models.zone import Zone
 from app.schemas.admin import AdminUserRead, SightingZoneUpdate, UserRoleUpdate, ZoneCreate, ZoneUpdate
+from app.schemas.notification import NotificationCreate
 from app.schemas.sighting import SightingRead, ZoneRead
+from app.services.notification_service import notify_user
 
-router = APIRouter(prefix="/admin", tags=["admin"])
+router = APIRouter(prefix="/api/admin", tags=["admin"])
 
 moderator_or_admin = require_role(UserRole.MODERATOR, UserRole.ADMIN)
 admin_only = require_role(UserRole.ADMIN)
@@ -22,7 +25,7 @@ admin_only = require_role(UserRole.ADMIN)
 async def create_zone(
     payload: ZoneCreate,
     db: AsyncSession = Depends(get_db),
-    _: User = Depends(moderator_or_admin),
+    _: User = Depends(admin_only),
 ) -> Zone:
     existing = await db.scalar(select(Zone).where(Zone.slug == payload.slug))
     if existing is not None:
@@ -40,7 +43,7 @@ async def update_zone(
     zone_id: int,
     payload: ZoneUpdate,
     db: AsyncSession = Depends(get_db),
-    _: User = Depends(moderator_or_admin),
+    _: User = Depends(admin_only),
 ) -> Zone:
     zone = await db.get(Zone, zone_id)
     if zone is None:
@@ -60,7 +63,7 @@ async def update_zone(
 async def delete_zone(
     zone_id: int,
     db: AsyncSession = Depends(get_db),
-    _: User = Depends(moderator_or_admin),
+    _: User = Depends(admin_only),
 ) -> None:
     zone = await db.get(Zone, zone_id)
     if zone is None:
@@ -82,7 +85,7 @@ async def reassign_sighting_zone(
     sighting_id: int,
     payload: SightingZoneUpdate,
     db: AsyncSession = Depends(get_db),
-    _: User = Depends(moderator_or_admin),
+    _: User = Depends(admin_only),
 ) -> SightingRead:
     sighting = await db.get(Sighting, sighting_id, options=[selectinload(Sighting.zone)])
     if sighting is None:
@@ -108,8 +111,22 @@ async def delete_sighting(
     if sighting is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Sighting not found")
 
+    # capture before delete -- the row (and its user_id) won't exist after commit
+    owner_id = sighting.user_id
+
     await db.delete(sighting)
     await db.commit()
+
+    await notify_user(
+        db,
+        NotificationCreate(
+            user_id=owner_id,
+            type=NotificationType.SIGHTING_REMOVED,
+            title="Your sighting was removed",
+            body="A moderator removed one of your cat sightings.",
+            data={"sighting_id": sighting_id},
+        ),
+    )
 
 
 def _to_sighting_read(sighting: Sighting, zone: Zone) -> SightingRead:
@@ -145,7 +162,21 @@ async def update_user_role(
     if user is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "User not found")
 
+    old_role = user.role
     user.role = payload.role
     await db.commit()
     await db.refresh(user)
+
+    if old_role != user.role:
+        await notify_user(
+            db,
+            NotificationCreate(
+                user_id=user.id,
+                type=NotificationType.ROLE_CHANGED,
+                title="Your role was updated",
+                body=f"Your account role changed from {old_role.value} to {user.role.value}.",
+                data={"old_role": old_role.value, "new_role": user.role.value},
+            ),
+        )
+
     return user

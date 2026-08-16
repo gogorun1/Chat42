@@ -2,23 +2,6 @@ import { FormEvent, useEffect, useState } from 'react'
 import { api, ApiError, Zone } from '../lib/api'
 import { useAuth, UserRole } from '../context/AuthContext'
 
-type SightingSearchItem = {
-  id: number
-  zone_id: number
-  zone_name: string
-  reporter_id: number
-  reporter_email: string
-  image_url: string
-  created_at: string
-}
-
-type SightingSearchResult = {
-  items: SightingSearchItem[]
-  total: number
-  page: number
-  page_size: number
-}
-
 type AdminUser = {
   id: number
   email: string
@@ -37,7 +20,6 @@ export function AdminPage() {
       </div>
 
       <ZonesPanel />
-      <SightingsPanel />
       {user?.role === 'admin' && <UsersPanel />}
     </div>
   )
@@ -130,110 +112,13 @@ function ZonesPanel() {
   )
 }
 
-function SightingsPanel() {
-  const [result, setResult] = useState<SightingSearchResult | null>(null)
-  const [zones, setZones] = useState<Zone[]>([])
-  const [error, setError] = useState<string | null>(null)
-
-  function loadSightings() {
-    api
-      .get<SightingSearchResult>('/search/sightings?page=1&page_size=20')
-      .then(setResult)
-      .catch(() => setError('Failed to load sightings'))
-  }
-
-  useEffect(() => {
-    loadSightings()
-    api.get<Zone[]>('/sightings/zones').then(setZones).catch(() => undefined)
-  }, [])
-
-  async function handleReassign(sightingId: number, zoneId: string) {
-    setError(null)
-    try {
-      await api.patch(`/admin/sightings/${sightingId}`, { zone_id: Number(zoneId) })
-      loadSightings()
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Failed to reassign zone')
-    }
-  }
-
-  async function handleDelete(sightingId: number) {
-    setError(null)
-    try {
-      await api.del(`/admin/sightings/${sightingId}`)
-      loadSightings()
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Failed to delete sighting')
-    }
-  }
-
-  return (
-    <section className="rounded-xl border border-slate-800 bg-slate-900 p-6">
-      <h2 className="mb-4 text-lg font-semibold">Sightings</h2>
-
-      {error && <p className="mb-3 text-sm text-red-400">{error}</p>}
-
-      <div className="overflow-x-auto">
-        <table className="w-full text-left text-sm">
-          <thead className="text-slate-500">
-            <tr>
-              <th className="pb-2 pr-4">Reporter</th>
-              <th className="pb-2 pr-4">Zone</th>
-              <th className="pb-2 pr-4">Reported</th>
-              <th className="pb-2" />
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-800">
-            {result?.items.map((sighting) => (
-              <tr key={sighting.id}>
-                <td className="py-2 pr-4">{sighting.reporter_email}</td>
-                <td className="py-2 pr-4">
-                  <select
-                    value={sighting.zone_id}
-                    onChange={(event) => handleReassign(sighting.id, event.target.value)}
-                    className="rounded-md border border-slate-700 bg-slate-950 px-2 py-1 text-sm"
-                  >
-                    {zones.map((zone) => (
-                      <option key={zone.id} value={zone.id}>
-                        {zone.name}
-                      </option>
-                    ))}
-                  </select>
-                </td>
-                <td className="py-2 pr-4 text-slate-400">
-                  {new Date(sighting.created_at).toLocaleString()}
-                </td>
-                <td className="py-2">
-                  <button
-                    onClick={() => handleDelete(sighting.id)}
-                    className="text-red-400 hover:text-red-300"
-                  >
-                    Delete
-                  </button>
-                </td>
-              </tr>
-            ))}
-            {result && result.items.length === 0 && (
-              <tr>
-                <td colSpan={4} className="py-4 text-center text-slate-500">
-                  No sightings yet.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-    </section>
-  )
-}
-
 function UsersPanel() {
   const { user: currentUser } = useAuth()
   const [users, setUsers] = useState<AdminUser[]>([])
   const [error, setError] = useState<string | null>(null)
 
   function loadUsers() {
-    api.get<AdminUser[]>('/admin/users').then(setUsers).catch(() => setError('Failed to load users'))
+    api.get<AdminUser[]>('/api/admin/users').then(setUsers).catch(() => setError('Failed to load users'))
   }
 
   useEffect(loadUsers, [])

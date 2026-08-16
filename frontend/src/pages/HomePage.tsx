@@ -7,11 +7,15 @@ export function HomePage() {
   const { user, logout } = useAuth();
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[] | null>(null);
 
-  useEffect(() => {
+  function loadLeaderboard() {
     api
       .get<LeaderboardEntry[]>("/gamification/leaderboard?limit=100")
       .then(setLeaderboard)
       .catch(() => undefined);
+  }
+
+  useEffect(() => {
+    loadLeaderboard();
   }, []);
 
   const myRank = leaderboard?.findIndex((entry) => entry.user_id === user?.id) ?? -1;
@@ -41,7 +45,13 @@ export function HomePage() {
         </div>
       </div>
 
-      <CampusMap />
+      {/*
+        CampusMap owns its own upload/guess/diary flows internally, but the
+        leaderboard is lifted up here so both the header's "my rank" card
+        and CampusMap's Ranking tab read from the same fetch -- avoids two
+        independent /gamification/leaderboard calls drifting out of sync.
+      */}
+      <CampusMap leaderboard={leaderboard} loadLeaderboard={loadLeaderboard} />
     </div>
   );
 }
