@@ -25,14 +25,12 @@ function App() {
           <Route path="/search" element={<SearchPage />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/profile/:id" element={<ProfilePage />} />
-          <Route element={<AdminRoute />}>
-             <Route path="/admin" element={<AdminPage />} />
-             </Route>
         </Route>
 
         {/* Protected routes - admin only */}
         <Route element={<ProtectedRoute requiredRole="admin" />}>
           <Route path="/analytics" element={<AnalyticsPage />} />
+          <Route path="/admin" element={<AdminPage />} />
         </Route>
 
         {/* Public routes */}
