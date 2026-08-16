@@ -68,6 +68,7 @@ export type SearchSighting = {
   zone_name: string
   reporter_id: number
   reporter_email: string
+  reporter: string
   image_url: string
   created_at: string
 }
@@ -185,7 +186,7 @@ export const sightingsApi = {
     api.get<SightingSearchResult>(`/api/search/sightings${buildQuery(params)}`),
   zones: () => api.get<Zone[]>('/sightings/zones'),
   deleteSighting: (id: number) =>
-    api.del<void>(`/admin/sightings/${id}`),
+    api.del<void>(`/api/admin/sightings/${id}`),
 }
  
 export const analyticsApi = {
