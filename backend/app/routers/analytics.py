@@ -44,14 +44,14 @@ async def analytics_summary(
         else datetime.now(timezone.utc) - timedelta(days=days)
     )
 
-    window_end = None
-    if date_to is not None:
-        window_end = date_to + timedelta(days=1)
+    # date_to already arrives as the end of the selected day (23:59:59), so
+    # it's used as an inclusive upper bound rather than pushed a day further.
+    window_end = date_to
 
     def apply_filters(stmt):
         stmt = stmt.where(Sighting.created_at >= window_start)
         if window_end is not None:
-            stmt = stmt.where(Sighting.created_at < window_end)
+            stmt = stmt.where(Sighting.created_at <= window_end)
         if zone_id is not None:
             stmt = stmt.where(Sighting.zone_id == zone_id)
         return stmt
@@ -94,23 +94,23 @@ async def analytics_summary(
         for date, count in trend_rows
     ]
 
-    reporter_stmt = (
-    # apply_filters(
+    reporter_stmt = apply_filters(
         select(
             User.id,
             User.email,
+            User.display_name,
             func.count(Sighting.id))
         .join(Sighting, Sighting.user_id == User.id)
-    # )
-        .group_by(User.id, User.email)
-        .order_by(func.count(Sighting.id).desc())
-        .limit(reporter_limit)
-    )
+    ).group_by(
+        User.id, User.email, User.display_name
+    ).order_by(
+        func.count(Sighting.id).desc()
+    ).limit(reporter_limit)
 
     reporter_rows = (await db.execute(reporter_stmt)).all()
     top_reporters = [
-        TopReporterOut(user_id=uid, email=email, count=count)
-        for uid, email, count in reporter_rows
+        TopReporterOut(user_id=uid, email=email, display_name=display_name, count=count)
+        for uid, email, display_name, count in reporter_rows
     ]
 
     return AnalyticsSummaryOut(

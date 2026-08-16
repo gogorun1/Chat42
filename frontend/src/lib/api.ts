@@ -105,3 +105,61 @@ export type GuessResult = {
   guess_points: number
   actual_zone_id: number
 }
+
+export type ZoneActivity = {
+  zone_id: number
+  zone_name: string
+  count: number
+}
+
+export type DailyTrend = {
+  date: string // "YYYY-MM-DD"
+  count: number
+}
+
+export type TopReporter = {
+  user_id: number
+  email: string
+  display_name: string | null
+  count: number
+}
+
+export type AnalyticsSummary = {
+  total_sightings: number
+  period_sightings: number
+  window_start: string
+  window_end: string | null
+  zone_activity: ZoneActivity[]
+  daily_trend: DailyTrend[]
+  top_reporters: TopReporter[]
+}
+
+export type AnalyticsParams = {
+  days?: number
+  date_from?: string
+  date_to?: string
+  zone_id?: number
+  reporter_limit?: number
+}
+
+// Small helper: builds a query string, skipping undefined/empty values so
+// callers can pass a partial params object without manually filtering it.
+function buildQuery(params: Record<string, unknown>): string {
+  const search = new URLSearchParams()
+  for (const [key, value] of Object.entries(params)) {
+    if (value !== undefined && value !== null && value !== '') {
+      search.set(key, String(value))
+    }
+  }
+  const qs = search.toString()
+  return qs ? `?${qs}` : ''
+}
+
+export const sightingsApi = {
+  zones: () => api.get<Zone[]>('/sightings/zones'),
+}
+
+export const analyticsApi = {
+  summary: (params: AnalyticsParams = {}) =>
+    api.get<AnalyticsSummary>(`/analytics/summary${buildQuery(params)}`),
+}

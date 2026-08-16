@@ -124,7 +124,12 @@ export  const zones: any = {
   },
 };
 
-export default function CampusMap() {
+type CampusMapProps = {
+  leaderboard: LeaderboardEntry[] | null;
+  loadLeaderboard: () => void;
+};
+
+export default function CampusMap({ leaderboard, loadLeaderboard }: CampusMapProps) {
   const { user, refreshUser } = useAuth();
   const [page, setPage] = useState("intro");
 
@@ -149,19 +154,11 @@ export default function CampusMap() {
   const [campusSightings, setCampusSightings] = useState<SearchSighting[]>([]);
   const [diary, setDiary] = useState<Diary | null>(null);
   const [diaryError, setDiaryError] = useState<string | null>(null);
-  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[] | null>(null);
 
   function loadCampusSightings() {
     api
       .get<SightingSearchResult>("/search/sightings?page_size=100&sort_by=created_at&sort_order=desc")
       .then((result) => setCampusSightings(result.items))
-      .catch(() => undefined);
-  }
-
-  function loadLeaderboard() {
-    api
-      .get<LeaderboardEntry[]>("/gamification/leaderboard?limit=100")
-      .then(setLeaderboard)
       .catch(() => undefined);
   }
 
@@ -175,7 +172,6 @@ export default function CampusMap() {
       .get<Diary>("/ai/diary")
       .then(setDiary)
       .catch((err) => setDiaryError(err instanceof ApiError ? err.message : "Failed to load diary"));
-    loadLeaderboard();
   }, []);
 
   const currentZone = zones[selectedZone];
@@ -288,6 +284,7 @@ async function handleGuess() {
       setReportMessage(
         "🐱 Thank you! Your Moulinette sighting has been reported."
       );
+      await refreshUser();
       loadCampusSightings();
       loadLeaderboard();
       setReportZone("");

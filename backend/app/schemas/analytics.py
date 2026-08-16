@@ -14,7 +14,8 @@ class DailyTrendOut(BaseModel):
 
 class TopReporterOut(BaseModel):
     user_id: int
-    email: str #change to username when we add usernames
+    email: str
+    display_name: str | None
     count: int
 
 

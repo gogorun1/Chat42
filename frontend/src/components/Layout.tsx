@@ -16,9 +16,14 @@ export function Layout() {
               Profile
             </Link>
             {(user.role === 'moderator' || user.role === 'admin') && (
-              <Link to="/admin" className="text-slate-400 hover:text-slate-200">
-                Admin
-              </Link>
+              <>
+                <Link to="/admin" className="text-slate-400 hover:text-slate-200">
+                  Admin
+                </Link>
+                <Link to="/analytics" className="text-slate-400 hover:text-slate-200">
+                  Analytics
+                </Link>
+              </>
             )}
           </nav>
         </header>
