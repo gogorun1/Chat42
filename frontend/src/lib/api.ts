@@ -184,6 +184,8 @@ export const sightingsApi = {
   search: (params: SightingSearchParams = {}) =>
     api.get<SightingSearchResult>(`/api/search/sightings${buildQuery(params)}`),
   zones: () => api.get<Zone[]>('/sightings/zones'),
+  deleteSighting: (id: number) =>
+    api.del<void>(`/admin/sightings/${id}`),
 }
  
 export const analyticsApi = {
