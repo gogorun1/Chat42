@@ -24,6 +24,7 @@ class SightingSearchOut(BaseModel):
     zone_name: str
     reporter_id: int
     reporter_email: str
+    reporter: str
     image_url: str
     created_at: datetime
 
