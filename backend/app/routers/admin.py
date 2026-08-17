@@ -25,7 +25,7 @@ admin_only = require_role(UserRole.ADMIN)
 async def create_zone(
     payload: ZoneCreate,
     db: AsyncSession = Depends(get_db),
-    _: User = Depends(admin_only),
+    _: User = Depends(moderator_or_admin),
 ) -> Zone:
     existing = await db.scalar(select(Zone).where(Zone.slug == payload.slug))
     if existing is not None:
@@ -43,7 +43,7 @@ async def update_zone(
     zone_id: int,
     payload: ZoneUpdate,
     db: AsyncSession = Depends(get_db),
-    _: User = Depends(admin_only),
+    _: User = Depends(moderator_or_admin),
 ) -> Zone:
     zone = await db.get(Zone, zone_id)
     if zone is None:
@@ -63,7 +63,7 @@ async def update_zone(
 async def delete_zone(
     zone_id: int,
     db: AsyncSession = Depends(get_db),
-    _: User = Depends(admin_only),
+    _: User = Depends(moderator_or_admin),
 ) -> None:
     zone = await db.get(Zone, zone_id)
     if zone is None:
