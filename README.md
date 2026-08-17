@@ -27,11 +27,11 @@ Key features (see [Features List](#features-list) and [Modules](#modules) for wh
 
 | Login | Role(s) | Responsibilities |
 |---|---|---|
-| jili | Tech Lead, Frontend Dev, Backend Dev | Owns **F1** (platform: FastAPI/React scaffolding, auth — email/password  + 42 OAuth, Docker deploy, Nginx/HTTPS, PP/ToS), **F7** (gamification, friends)  and **F10**   |
-| wding | AI Dev | Owns **F9** (Moulinette AI persona: diary generation, Q&A) and the cat-detection half of **F2** |
+| jili | Tech Lead, Backend Dev | Owns **F1** (platform: FastAPI/React scaffolding, auth — email/password  + 42 OAuth, Docker deploy, Nginx/HTTPS, PP/ToS), **F7** (gamification, friends)  and **F10**   |
+| wding | PM, AI Dev | Owns **F9** (Moulinette AI persona: diary generation, Q&A) and the cat-detection half of **F2** |
 | slou | PO, Design, Frontend Dev | Owns **F4** (map & cat profile pages, design system) |
 | lshenghu | Frontend Dev | Owns **F2** (upload flow, PWA) |
-| shazhu | PM, Fullstack Dev | Owns **F5** (WebSocket, notifications) and the remainder of **F8** (search, admin dashboard) |
+| shazhu |  Fullstack Dev | Owns **F5** (WebSocket, notifications) and the remainder of **F8** (search, admin dashboard) |
 
 ## Project Management
 
