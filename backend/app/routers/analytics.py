@@ -5,6 +5,7 @@ from datetime import datetime, timedelta, timezone
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.core.database import get_db
 from app.core.deps import get_current_user
@@ -16,9 +17,10 @@ from app.schemas.analytics import (
     DailyTrendOut,
     TopReporterOut,
     ZoneActivityOut,
+    RecentSightingOut
 )
 
-router = APIRouter(prefix="/analytics", tags=["analytics"])
+router = APIRouter(prefix="/api/analytics", tags=["analytics"])
 
 
 @router.get("/summary", response_model=AnalyticsSummaryOut)
@@ -111,6 +113,31 @@ async def analytics_summary(
         for uid, email, count in reporter_rows
     ]
 
+    recent_stmt = (
+        apply_filters(
+            select(Sighting)
+            .options(
+                selectinload(Sighting.zone),
+                selectinload(Sighting.user),
+            )
+        )
+        .order_by(Sighting.created_at.desc())
+        .limit(10)
+    )
+
+    recent_rows = (await db.scalars(recent_stmt)).unique().all()
+
+    recent_sightings = [
+        RecentSightingOut(
+            id=s.id,
+            zone_id=s.zone_id,
+            zone_name=s.zone.name,
+            reporter=s.user.display_name or s.user.email.split("@")[0],
+            image_url=f"/uploads/{s.image_path}",
+            created_at=s.created_at,
+        )
+        for s in recent_rows
+    ]
     return AnalyticsSummaryOut(
         total_sightings=total_sightings,
         period_sightings=period_sightings,
@@ -123,4 +150,5 @@ async def analytics_summary(
         zone_activity=zone_activity,
         daily_trend=daily_trend,
         top_reporters=top_reporters,
+        recent_sightings=recent_sightings
     )

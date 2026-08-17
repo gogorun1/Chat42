@@ -1,5 +1,7 @@
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
+from app.models.user import UserRole
+
 
 class UserCreate(BaseModel):
     email: EmailStr
@@ -17,3 +19,7 @@ class UserRead(BaseModel):
     id: int
     email: str
     ft_login: str | None
+    role: UserRole
+    display_name: str | None
+    avatar_url: str | None
+    guess_points: int

@@ -14,7 +14,7 @@ from app.models.user import User
 from app.models.zone import Zone
 from app.schemas.search import SightingSearchOut, SightingSearchResult, SightingSortField, SortOrder
 
-router = APIRouter(prefix="/search", tags=["search"])
+router = APIRouter(prefix="/api/search", tags=["search"])
 
 SORT_COLUMN = {
     SightingSortField.CREATED_AT: Sighting.created_at,
@@ -65,6 +65,7 @@ async def search_sightings(
             zone_name=s.zone.name,
             reporter_id=s.user_id,
             reporter_email=s.user.email,
+            reporter=s.user.display_name or s.user.email.split("@")[0],
             image_url=f"/uploads/{s.image_path}",
             created_at=s.created_at,
         )
