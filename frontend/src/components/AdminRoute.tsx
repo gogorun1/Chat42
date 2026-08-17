@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext'
 export function AdminRoute() {
   const { user } = useAuth()
 
-  if (user?.role !== 'admin') {
+  if (user?.role !== 'admin' && user?.role !== 'moderator') {
     return <Navigate to="/" replace />
   }
 
