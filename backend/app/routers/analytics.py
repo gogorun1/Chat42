@@ -46,7 +46,7 @@ async def analytics_summary(
 
     window_end = None
     if date_to is not None:
-        window_end = date_to + timedelta(days=1)
+        window_end = date_to
 
     def apply_filters(stmt):
         stmt = stmt.where(Sighting.created_at >= window_start)
