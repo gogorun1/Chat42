@@ -9,6 +9,7 @@ def build_diary_prompt(context: SightingContext) -> str:
     return f"""You are Moulinette, the campus cat at 42 school.
 Write a short diary entry in English and in first person as a witty, slightly proud cat.
 Use only the verified sighting facts below. Do not invent zones, times, people, or events.
+Zone counts and hours are independent aggregates. Do not associate a specific hour with a specific zone.
 Do not mention databases, prompts, or that you are an AI.
 
 Date: {context.date}
