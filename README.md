@@ -1,4 +1,4 @@
-*This project has been created as part of the 42 curriculum by jili, wding, \<login3\>, \<login4\>, \<login5\>.*
+*This project has been created as part of the 42 curriculum by jili, wding, slou, shazhu, lshenghu.*
 
 # Chat 42 (Moulinette)
 
@@ -6,14 +6,13 @@
 
 **Chat 42** is a campus-cat-sighting map built for 42's `ft_transcendence` project. Students photograph cats they
 spot around campus, tag the sighting with a map zone, and the app builds a shared, real-time picture of where
-campus cats hang out — their activity map, history, and patterns over time. An AI-driven persona, **Moulinette**
-("the cat" in French), writes in-character diary entries and answers questions based on the real, crowdsourced
+campus cats hang out — their activity map, history, and patterns over time. An AI-driven persona, **Moulinette**, writes in-character diary entries and answers questions based on the real, crowdsourced
 sighting data, and a "guess where the cat is" game turns the whole thing into a light competitive loop.
 
 Key features (see [Features List](#features-list) and [Modules](#modules) for what's actually built vs. planned):
 
 - Photo upload + map-zone tagging for cat sightings, filtered by an automated (zero-shot) cat detector
-- A 2D campus map showing sighting activity, history, and per-cat profiles
+- A 2D campus map showing sighting activity
 - Moulinette's AI persona: auto-generated diary entries and natural-language Q&A grounded in real sighting data
 - Standard account system (email/password) plus 42 OAuth login
 - Friends, notifications, gamification (achievements, leaderboard, sighting-prediction game)
@@ -37,9 +36,9 @@ Key features (see [Features List](#features-list) and [Modules](#modules) for wh
 
 <!-- TODO: fill in actual practices once the team settles on them. -->
 
-- Task tracking: \<GitHub Issues / Trello / other\>
-- Communication: \<Discord / Slack / other\>
-- Meeting cadence: \<weekly / bi-weekly, etc.\>
+- Task tracking: \<GitHub Issues, Wechat\>
+- Communication: \<Wechat, Google meeting\>
+- Meeting cadence: \<Weekly group meetings, with additional meetings between 2–3 group members as needed.\>
 - Branch strategy: one feature branch per roadmap item (F1, F2, F4, F5, F7, F8, F9, F10), reviewed before merge to `main`.
 
 ## Technical Stack
@@ -68,8 +67,9 @@ Currently one table (more will be added as F2/F4/F5/F7/F8/F10 land — this sect
 | `ft_login` | varchar(255), unique, nullable | 42 username; set when the account is linked to/created via 42 OAuth |
 | `created_at` | timestamptz | |
 | `updated_at` | timestamptz | |
+| `zone` | svg, TypeScript |svg for visu, TypeScript for zone data and selection logic|
 
-<!-- TODO: add sightings, zones, friendships, etc. tables here as they're built, plus a schema diagram. -->
+<!-- TODO: add sightings, friendships, etc. tables here as they're built, plus a schema diagram. -->
 
 ## Features List
 
@@ -207,3 +207,11 @@ The backend's interactive API reference is available at https://localhost/docs w
 
 
 <!-- TODO: other members should add their own AI-usage disclosure here as they contribute to their branches. -->
+## AI-usage
+| Login | Part | AI-usage |
+|---|---|---|
+| jili | F1, F7, F10 |    |
+| wding | F2, F9 | |
+| slou | F4 |AI is used to transform real photos of the school and cat into a painting style.  |
+| lshenghu | F2 |  |
+| shazhu | F5, F8 |  |
