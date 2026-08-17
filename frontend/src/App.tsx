@@ -28,8 +28,12 @@ function App() {
         </Route>
 
         {/* Protected routes - admin only */}
-        <Route element={<ProtectedRoute requiredRole="admin" />}>
+        <Route element={<AdminRoute requiredRole="admin" />}>
           <Route path="/analytics" element={<AnalyticsPage />} />
+        </Route>
+
+        {/* Protected routes - moderator or admin */}
+        <Route element={<AdminRoute />}>
           <Route path="/admin" element={<AdminPage />} />
         </Route>
 
