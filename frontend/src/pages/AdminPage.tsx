@@ -43,7 +43,7 @@ function ZonesPanel() {
     setError(null)
     setLoading(true)
     try {
-      await api.post('/admin/zones', { slug, name })
+      await api.post('/api/admin/zones', { slug, name })
       setSlug('')
       setName('')
       loadZones()
@@ -57,7 +57,7 @@ function ZonesPanel() {
   async function handleDelete(zoneId: number) {
     setError(null)
     try {
-      await api.del(`/admin/zones/${zoneId}`)
+      await api.del(`/api/admin/zones/${zoneId}`)
       loadZones()
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Failed to delete zone')
@@ -126,7 +126,7 @@ function UsersPanel() {
   async function handleRoleChange(userId: number, role: string) {
     setError(null)
     try {
-      await api.patch(`/admin/users/${userId}/role`, { role })
+      await api.patch(`/api/admin/users/${userId}/role`, { role })
       loadUsers()
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Failed to change role')
