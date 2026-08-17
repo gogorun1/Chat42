@@ -1,6 +1,7 @@
 import { Link, Outlet } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { LiveToasts } from './LiveToasts'
+import { NotificationBell } from './NotificationBell'
 
 export function Layout() {
   const { user } = useAuth()
@@ -47,10 +48,13 @@ export function Layout() {
                 Analytics
               </Link>
             )}
+            {/* Pushes the bell to the far right of the nav row */}
+            <div className="ml-auto flex items-center">
+              <NotificationBell />
+            </div>
           </nav>
         </header>
       )}
-
       <main className="flex flex-1 flex-col">
         <Outlet />
       </main>
@@ -77,3 +81,4 @@ export function Layout() {
     </div>
   )
 }
+
