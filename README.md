@@ -27,11 +27,11 @@ Key features (see [Features List](#features-list) and [Modules](#modules) for wh
 
 | Login | Role(s) | Responsibilities |
 |---|---|---|
-| jili | Tech Lead, Backend Dev | Owns **F1** (platform: FastAPI/React scaffolding, auth — email/password + 42 OAuth, Docker deploy, Nginx/HTTPS, PP/ToS) and **F10**  |
+| jili | Tech Lead, Frontend Dev, Backend Dev | Owns **F1** (platform: FastAPI/React scaffolding, auth — email/password  + 42 OAuth, Docker deploy, Nginx/HTTPS, PP/ToS), **F7** (gamification, friends)  and **F10**   |
 | wding | AI Dev | Owns **F9** (Moulinette AI persona: diary generation, Q&A) and the cat-detection half of **F2** |
-| \<login\> | PO, Design, Frontend Dev | Owns **F4** (map & cat profile pages, design system) |
-| \<login\> | Frontend Dev | Owns **F2** (upload flow, PWA) and **F7** (gamification, friends) |
-| \<login\> | PM, Fullstack Dev | Owns **F5** (WebSocket, notifications) and the remainder of **F8** (search, admin dashboard) |
+| slou | PO, Design, Frontend Dev | Owns **F4** (map & cat profile pages, design system) |
+| lshenghu | Frontend Dev | Owns **F2** (upload flow, PWA) |
+| shazhu | PM, Fullstack Dev | Owns **F5** (WebSocket, notifications) and the remainder of **F8** (search, admin dashboard) |
 
 ## Project Management
 
@@ -120,7 +120,7 @@ Target: 14 mandatory points + up to 5 bonus points (19 total). Status reflects w
 
 <!-- TODO: every member fills in their own section as they contribute. -->
 
-**jili** — F1 (Platform) & F10
+**jili** — F1 (Platform) & F7 & F10
 - Backend/frontend scaffolding (FastAPI + React/Vite/Tailwind), Docker Compose setup with non-root containers.
 - Email/password authentication (bcrypt, JWT-in-cookie) and 42 OAuth 2.0 login, including account auto-linking by email.
 - PostgreSQL + SQLAlchemy async + Alembic migrations.
@@ -128,13 +128,21 @@ Target: 14 mandatory points + up to 5 bonus points (19 total). Status reflects w
 - Privacy Policy / Terms of Service pages and site-wide footer.
 - F8 (search, analytics dashboard): not started yet.
 
-**\<login\> ("钩钩")** — F9 & F2 (cat detection) — *not started yet*
+**wding** — F9 & F2 (cat detection) — *not started yet*
 
-**\<login\>** — F4 — *not started yet*
+**slou** — F4
+- Designed the core game concept and gameplay loop around finding Moulinette on the 42 campus.
+- Defined the guessing point system: spending 1 point to guess and earning 3 points for a correct guess.
+- Defined the user experience for guess, skip, results, history, heat map, diary, and ranking features.
+- Coordinated the product vision between the frontend and backend, ensuring that the implemented features match the intended gameplay experience.
+- React/Vite/Tailwind frontend scaffolding with a game-style Chat42 UI and game navigation through a reusable `GameMenu`.
+- Campus map with selectable zones, Moulinette display, and the UI of last-sighting information, history, heat map, diary, and ranking views.
+- Moulinette intro/guess flow: users can choose to guess her location for 1 point, earn 3 points for a correct guess, or skip and directly view the last-sighting.
+- Cat sighting report UI (upload function realised by **lshenghu** - **F2**).
 
-**\<login\>** — F2 & F7 — *not started yet*
+**lshenghu** — F2  — *not started yet*
 
-**\<login\>** — F5 & F8 (remainder) — *not started yet*
+**shazhu** — F5 & F8 (remainder) — *not started yet*
 
 ## Instructions
 
