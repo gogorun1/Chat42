@@ -1,4 +1,5 @@
 import Plot from '../../lib/Plot'
+import type { PlotMouseEvent } from 'plotly.js'
 
 type Bar = { label: string; value: number }
 
@@ -58,7 +59,6 @@ export function BarChart({
           automargin: true,
           tickfont: { size: 12 },
           ticklabelposition: 'outside',
-          ticklabelstandoff: 20,
         },
         hoverlabel: {
           bgcolor: '#0f172a',
@@ -70,13 +70,9 @@ export function BarChart({
         displaylogo: false,
         responsive: true,
       }}
-      onClick={(event: {
-        points?: Array<{
-          y?: string | number
-        }>
-      }) => {
+      onClick={(event: Readonly<PlotMouseEvent>) => {
         const label = event.points?.[0]?.y
-        if (label !== undefined && onBarClick) {
+        if (label != null && onBarClick) {
           onBarClick(String(label))
         }
       }}
