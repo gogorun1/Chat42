@@ -15,6 +15,7 @@ from app.models.zone import Zone
 from app.schemas.sighting import SightingRead, ZoneRead
 from app.services.cat_detection import InvalidImageError
 from app.services.cat_detector_factory import get_cat_detector
+from app.services.gamification_service import check_and_award_badges
 from app.services.notification_service import broadcast_sighting
 from app.services.storage import save_upload
 
@@ -86,6 +87,7 @@ async def create_sighting(
     await db.refresh(sighting)
     sighting.zone = zone
     await broadcast_sighting(sighting, zone_name=zone.name)
+    await check_and_award_badges(db, current_user)
     return _to_sighting_read(sighting)
 
 

@@ -1,6 +1,6 @@
 import pytest
 
-from app.services.diary_service import generate_diary
+from app.services.diary_service import build_diary_prompt, generate_diary
 from app.services.llm_client import FakeLLMClient
 from app.services.sighting_context import SightingContext, ZoneCount
 
@@ -72,3 +72,16 @@ async def test_generate_diary_falls_back_when_llm_returns_empty_text() -> None:
     diary = await generate_diary(context, llm)
 
     assert diary == "Nobody spotted me today. Exactly as planned."
+
+
+def test_prompt_forbids_associating_hours_with_zones() -> None:
+    context = SightingContext(
+        date="2026-08-13",
+        total_sightings=3,
+        zones=[ZoneCount(name="Garden", count=2)],
+        hours=[10, 13, 18],
+    )
+
+    prompt = build_diary_prompt(context)
+
+    assert "Do not associate a specific hour with a specific zone" in prompt

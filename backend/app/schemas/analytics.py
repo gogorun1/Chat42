@@ -1,10 +1,18 @@
 from pydantic import BaseModel
-
+from datetime import datetime
 
 class ZoneActivityOut(BaseModel):
     zone_id: int
     zone_name: str
     count: int
+
+class RecentSightingOut(BaseModel):
+    id: int
+    zone_id: int
+    zone_name: str
+    reporter: str
+    image_url: str
+    created_at: datetime
 
 
 class DailyTrendOut(BaseModel):
@@ -26,3 +34,4 @@ class AnalyticsSummaryOut(BaseModel):
     zone_activity: list[ZoneActivityOut]
     daily_trend: list[DailyTrendOut]
     top_reporters: list[TopReporterOut]
+    recent_sightings: list[RecentSightingOut]
