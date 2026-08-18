@@ -118,6 +118,10 @@ Currently one table (more will be added as F2/F4/F5/F7/F8/F10 land — this sect
 | Protected routes | Unauthenticated users are redirected to `/login` | \<your-login\> (F1) |
 | Privacy Policy & Terms of Service pages | Project-specific content, linked from a site-wide footer | \<your-login\> (F1) |
 | HTTPS everywhere | All external traffic terminated at Nginx with TLS; direct HTTP access to frontend/backend containers is not possible | \<your-login\> (F1) |
+| Real-time notifications (WebSocket) | Instant, push-based delivery — no polling — for badge-earned, role-change, and sighting-deletion events, surfaced via a live notification bell | shazhu (F5) |
+| Advanced sighting search | `/api/search/sightings` — filter by zone and date range, sort by creation date or zone, paginated results; all filters strictly typed so malformed input is rejected before it reaches the database | shazhu (F8) |
+| Analytics dashboard | Admin-only charts over sighting history, gated behind the F10 role check, including an all-time top-reporters view independent of the currently selected date/zone filters | shazhu (F8) |
+| Role-based moderation on search results | Moderators/admins can remove a sighting directly from the search page, triggering the F5 deletion notification to the original reporter | shazhu (F5 + F8, integrating with jili F10's role system) |
 
 ## Modules
 
@@ -252,4 +256,4 @@ The backend's interactive API reference is available at https://localhost/docs w
 | wding | F2, F9 | |
 | slou | F4 |AI is used to transform real photos of the school and cat into a painting style.  |
 | lshenghu | F2 |  |
-| shazhu | F5, F8 | F8	Used to help review WebSocket/notification architecture and role-based moderation logic, debug an Nginx trailing-slash redirect and an Alembic migration issue. |
+| shazhu | F5, F8 | Used to help review WebSocket/notification architecture and role-based moderation logic, debug an Nginx trailing-slash redirect and an Alembic migration issue. |
