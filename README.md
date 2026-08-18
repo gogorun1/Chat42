@@ -1,4 +1,4 @@
-*This project has been created as part of the 42 curriculum by jili, wding, \<login3\>, \<login4\>, \<login5\>.*
+*This project has been created as part of the 42 curriculum by jili, wding, slou, shazhu, lshenghu.*
 
 # Chat 42 (Moulinette)
 
@@ -6,14 +6,13 @@
 
 **Chat 42** is a campus-cat-sighting map built for 42's `ft_transcendence` project. Students photograph cats they
 spot around campus, tag the sighting with a map zone, and the app builds a shared, real-time picture of where
-campus cats hang out — their activity map, history, and patterns over time. An AI-driven persona, **Moulinette**
-("the cat" in French), writes in-character diary entries and answers questions based on the real, crowdsourced
+campus cats hang out — their activity map, history, and patterns over time. An AI-driven persona, **Moulinette**, writes in-character diary entries and answers questions based on the real, crowdsourced
 sighting data, and a "guess where the cat is" game turns the whole thing into a light competitive loop.
 
 Key features (see [Features List](#features-list) and [Modules](#modules) for what's actually built vs. planned):
 
 - Photo upload + map-zone tagging for cat sightings, filtered by an automated (zero-shot) cat detector
-- A 2D campus map showing sighting activity, history, and per-cat profiles
+- A 2D campus map showing sighting activity
 - Moulinette's AI persona: auto-generated diary entries and natural-language Q&A grounded in real sighting data
 - Standard account system (email/password) plus 42 OAuth login
 - Friends, notifications, gamification (achievements, leaderboard, sighting-prediction game)
@@ -27,19 +26,19 @@ Key features (see [Features List](#features-list) and [Modules](#modules) for wh
 
 | Login | Role(s) | Responsibilities |
 |---|---|---|
-| jili | Tech Lead, Backend Dev | Owns **F1** (platform: FastAPI/React scaffolding, auth — email/password + 42 OAuth, Docker deploy, Nginx/HTTPS, PP/ToS) and **F10**  |
-| wding | AI Dev | Owns **F9** (Moulinette AI persona: diary generation, Q&A) and the cat-detection half of **F2** |
-| \<login\> | PO, Design, Frontend Dev | Owns **F4** (map & cat profile pages, design system) |
-| \<login\> | Frontend Dev | Owns **F2** (upload flow, PWA) and **F7** (gamification, friends) |
-| \<login\> | PM, Fullstack Dev | Owns **F5** (WebSocket, notifications) and the remainder of **F8** (search, admin dashboard) |
+| jili | Tech Lead, Backend Dev | Owns **F1** (platform: FastAPI/React scaffolding, auth — email/password  + 42 OAuth, Docker deploy, Nginx/HTTPS, PP/ToS), **F7** (gamification, friends)  and **F10**   |
+| wding | PM, AI Dev | Owns **F9** (Moulinette AI persona: diary generation, Q&A) and the cat-detection half of **F2** |
+| slou | PO, Design, Frontend Dev | Owns **F4** (map, design system) |
+| lshenghu | Frontend Dev | Owns **F2** (upload flow, PWA) |
+| shazhu |  Fullstack Dev | Owns **F5** (WebSocket, notifications) and **F8** (search, admin dashboard) |
 
 ## Project Management
 
 <!-- TODO: fill in actual practices once the team settles on them. -->
 
-- Task tracking: \<GitHub Issues / Trello / other\>
-- Communication: \<Discord / Slack / other\>
-- Meeting cadence: \<weekly / bi-weekly, etc.\>
+- Task tracking: \<GitHub Issues, Wechat\>
+- Communication: \<Wechat, Google meeting\>
+- Meeting cadence: \<Weekly group meetings, with additional meetings between 2–3 group members as needed.\>
 - Branch strategy: one feature branch per roadmap item (F1, F2, F4, F5, F7, F8, F9, F10), reviewed before merge to `main`.
 
 ## Technical Stack
@@ -58,18 +57,52 @@ Key features (see [Features List](#features-list) and [Modules](#modules) for wh
 
 Currently one table (more will be added as F2/F4/F5/F7/F8/F10 land — this section should be kept in sync):
 
-**`users`**
+**users**
 
 | Column | Type | Notes |
 |---|---|---|
-| `id` | integer, PK | |
-| `email` | varchar(255), unique, not null | Login identifier for both auth methods |
-| `password_hash` | varchar(255), nullable | bcrypt hash; `null` for accounts created purely via 42 OAuth |
-| `ft_login` | varchar(255), unique, nullable | 42 username; set when the account is linked to/created via 42 OAuth |
-| `created_at` | timestamptz | |
-| `updated_at` | timestamptz | |
+| id | integer, PK | |
+| email | varchar(255), unique, indexed, not null | Login identifier for both auth methods |
+| password_hash | varchar(255), nullable | bcrypt hash; null for accounts created purely via 42 OAuth |
+| ft_login | varchar(255), unique, indexed, nullable | 42 username; set when the account is linked to/created via 42 OAuth |
+| role | enum `user_role` (`user`, `moderator`, `admin`), not null, default `user` | Drives F10 permission checks, also read by F8's moderation controls on the search page |
+| display_name | varchar(50), nullable | Falls back to `email.split("@")[0]` in the UI until set |
+| avatar_path | varchar(255), nullable | Served as `/uploads/{avatar_path}` via the `avatar_url` property |
+| guess_points | integer, not null, default 5 | Spent/earned by F4's guessing game |
+| created_at | timestamptz, server default now() | |
+| updated_at | timestamptz, server default now(), updates on change | |
 
-<!-- TODO: add sightings, zones, friendships, etc. tables here as they're built, plus a schema diagram. -->
+**zones**
+
+| Column | Type | Notes |
+|---|---|---|
+| id | integer, PK | |
+| slug | varchar(64), unique, indexed, not null | Stable identifier used by the frontend map (e.g. `cantine_0`) |
+| name | varchar(128), not null | Display name (e.g. "Shokudo") |
+
+**sightings**
+
+| Column | Type | Notes |
+|---|---|---|
+| id | integer, PK | |
+| user_id | integer, FK → users.id, indexed, not null | Reporter |
+| zone_id | integer, FK → zones.id, indexed, not null | |
+| image_path | varchar(512), not null | Stored upload path; served as `/uploads/{image_path}` |
+| created_at | timestamptz, server default now() | Sort key for F8's search, and for F5's real-time "new sighting" ordering |
+
+**notifications**
+
+| Column | Type | Notes |
+|---|---|---|
+| id | UUID, PK, default `uuid4()` | |
+| user_id | integer, FK → users.id `ON DELETE CASCADE`, indexed, not null | Recipient |
+| type | enum `notification_type` (`sighting_nearby`, `sighting_approved`, `sighting_rejected`, `sighting_removed`, `guess_result`, `badge_earned`, `friend_request`, `role_changed`, `system`), not null | Drives which icon/copy renders in the notification bell |
+| title | varchar(140), not null | Human-readable message, e.g. "You earned a new badge!" |
+| body | text, nullable | Optional longer detail |
+| data | JSONB, not null, default `{}` | Structured payload (e.g. which sighting/zone triggered it) for the frontend to act on |
+| read_at | timestamptz, nullable | Null = unread; `is_read` property derived from whether this is set |
+| created_at | timestamptz, server default now() | |
+
 
 ## Features List
 
@@ -95,12 +128,12 @@ Target: 14 mandatory points + up to 5 bonus points (19 total). Status reflects w
 | Module | Type | Pts | Status | Branch |
 |---|---|---|---|---|
 | Web framework (React + FastAPI) | Major | 2 | ✅ Done | F1 |
-| Real-time features (WebSocket) | Major | 2 | ⬜ Not started | F5 |
-| Standard user management | Major | 2 | 🟡 Partial (auth done; profile/avatar/friends pending) | F1/F7 |
-| Advanced permissions | Major | 2 | ⬜ Not started | F10 |
-| Advanced analytics dashboard | Major | 2 | ⬜ Not started | F8 |
+| Real-time features (WebSocket) | Major | 2 | ✅ Done | F5 |
+| Standard user management | Major | 2 | ✅ Done  | F1/F7 |
+| Advanced permissions | Major | 2 | ✅ Done | F10 |
+| Advanced analytics dashboard | Major | 2 | ✅ Done | F8 |
 | ORM (SQLAlchemy) | Minor | 1 | ✅ Done | F1 |
-| Advanced search | Minor | 1 | ⬜ Not started | F8 |
+| Advanced search | Minor | 1 | ✅ Done | F8 |
 | OAuth 2.0 (42) | Minor | 1 | ✅ Done | F1 |
 | PWA | Minor | 1 | 🟡 Partial (manifest + service worker; verify install on device) | F2 |
 
@@ -112,7 +145,7 @@ Target: 14 mandatory points + up to 5 bonus points (19 total). Status reflects w
 | File upload | Minor | 1 | ✅ Done | F2 |
 | Image recognition (zero-shot cat detection) | Minor | 1 | 🟡 Partial (interface + stub; wding's model pending) | F2 |
 | Gamification | Minor | 1 | ⬜ Not started | F7 |
-| Notification system *(buffer, only if needed)* | Minor | 1 | ⬜ Not started | F5 |
+| Notification system *(buffer, only if needed)* | Minor | 1 | ✅ Done | F5 |
 
 <!-- TODO: as each module is finished, add its implementation description + justification here, especially for anything that ends up being a custom "Modules of choice" entry. -->
 
@@ -120,7 +153,7 @@ Target: 14 mandatory points + up to 5 bonus points (19 total). Status reflects w
 
 <!-- TODO: every member fills in their own section as they contribute. -->
 
-**jili** — F1 (Platform) & F10
+**jili** — F1 (Platform) & F7 & F10
 - Backend/frontend scaffolding (FastAPI + React/Vite/Tailwind), Docker Compose setup with non-root containers.
 - Email/password authentication (bcrypt, JWT-in-cookie) and 42 OAuth 2.0 login, including account auto-linking by email.
 - PostgreSQL + SQLAlchemy async + Alembic migrations.
@@ -128,13 +161,26 @@ Target: 14 mandatory points + up to 5 bonus points (19 total). Status reflects w
 - Privacy Policy / Terms of Service pages and site-wide footer.
 - F8 (search, analytics dashboard): not started yet.
 
-**\<login\> ("钩钩")** — F9 & F2 (cat detection) — *not started yet*
+**wding** — F9 & F2 (cat detection) — *not started yet*
 
-**\<login\>** — F4 — *not started yet*
+**slou** — F4
+- Designed the core game concept and gameplay loop around finding Moulinette on the 42 campus.
+- Defined the guessing point system: spending 1 point to guess and earning 3 points for a correct guess.
+- Defined the user experience for guess, skip, results, history, heat map, diary, and ranking features.
+- Coordinated the product vision between the frontend and backend, ensuring that the implemented features match the intended gameplay experience.
+- React/Vite/Tailwind frontend scaffolding with a game-style Chat42 UI and game navigation through a reusable `GameMenu`.
+- Campus map with selectable zones, Moulinette display, and the UI of last-sighting information, history, heat map, diary, and ranking views.
+- Moulinette intro/guess flow: users can choose to guess her location for 1 point, earn 3 points for a correct guess, or skip and directly view the last-sighting.
+- Cat sighting report UI (upload function realised by **lshenghu** - **F2**).
 
-**\<login\>** — F2 & F7 — *not started yet*
+**lshenghu** — F2  — *not started yet*
 
-**\<login\>** — F5 & F8 (remainder) — *not started yet*
+**shazhu** — F5 & F8 
+- Real-time notification system over WebSocket: badge-earned, role-change, and sighting-deletion notifications are pushed to the client the instant they happen — via a notify_user() service on the backend and a live NotificationBell component on the frontend — rather than the client having to poll for updates.
+- Advanced sighting search (/api/search/sightings): filter by zone and date range, sortable by creation date or zone, paginated results. All filters are strictly typed (Pydantic int/datetime), so malformed input is rejected with a 422 before it ever reaches the database — verified directly with manual SQL-injection-style test payloads.
+- Analytics dashboard: admin-only, gated behind the F10 role check, including a top-reporters view that intentionally stays all-time regardless of whichever date/zone filters are selected elsewhere on the page.
+- Role-based moderation integrated into search: moderators/admins can remove a sighting directly from the search results, which triggers the F5 deletion notification to the original reporter — connecting F5, F8, and F10's role system.
+
 
 ## Instructions
 
@@ -199,3 +245,11 @@ The backend's interactive API reference is available at https://localhost/docs w
 
 
 <!-- TODO: other members should add their own AI-usage disclosure here as they contribute to their branches. -->
+## AI-usage
+| Login | Part | AI-usage |
+|---|---|---|
+| jili | F1, F7, F10 |    |
+| wding | F2, F9 | |
+| slou | F4 |AI is used to transform real photos of the school and cat into a painting style.  |
+| lshenghu | F2 |  |
+| shazhu | F5, F8 | F8	Used to help review WebSocket/notification architecture and role-based moderation logic, debug an Nginx trailing-slash redirect and an Alembic migration issue. |
