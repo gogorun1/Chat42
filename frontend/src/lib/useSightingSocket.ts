@@ -24,12 +24,13 @@ export type NotificationPush = {
 
 export type SocketMessage = SightingBroadcast | NotificationPush
 
-export function useSightingSocket(onMessage: (msg: SocketMessage) => void) {
+export function useSightingSocket(onMessage: (msg: SocketMessage) => void, enabled = true) {
   const [connected, setConnected] = useState(false)
   const onMessageRef = useRef(onMessage)
   onMessageRef.current = onMessage
 
   useEffect(() => {
+    if (!enabled) return
     let socket: WebSocket | null = null
     let heartbeat: ReturnType<typeof setInterval> | null = null
     let reconnectTimer: ReturnType<typeof setTimeout> | null = null
@@ -70,7 +71,7 @@ export function useSightingSocket(onMessage: (msg: SocketMessage) => void) {
       if (reconnectTimer) clearTimeout(reconnectTimer)
       socket?.close()
     }
-  }, [])
+  }, [enabled])
 
   return { connected }
 }

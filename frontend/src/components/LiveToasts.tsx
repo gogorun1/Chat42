@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react'
-import { useSightingSocket, type SocketMessage } from '../lib/useSightingSocket'
+import { type SocketMessage } from '../lib/useSightingSocket'
+import { useSocketSubscription } from '../context/SocketContext'
 
 type Toast = {
   id: string
@@ -19,7 +20,7 @@ export function LiveToasts() {
     }, 6000)
   }, [])
 
-  useSightingSocket(handleMessage)
+  useSocketSubscription(handleMessage)
 
   if (toasts.length === 0) return null
 
