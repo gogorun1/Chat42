@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { api } from '../lib/api'
 import type { NotificationPush, SocketMessage } from '../lib/useSightingSocket'
-import { useSightingSocket } from '../lib/useSightingSocket'
+import { useSocketSubscription } from '../context/SocketContext'
 
 type NotificationItem = {
   id: string
@@ -31,16 +31,11 @@ export function NotificationBell() {
   const fetchNotifications = useCallback(async () => {
     setLoading(true)
     try {
-      // NOTE: confirm this path against main.py's app.include_router() --
-      // your codebase mixes prefixed (/api/search/...) and unprefixed
-      // (/sightings/zones) routes, and I haven't seen how notification.py
-      // is mounted. Change to '/api/notifications' if it's registered
-      // under the /api prefix.
       const data = await api.get<NotificationListResponse>('/notifications?page=1&page_size=20')
       setItems(data.items)
       setUnreadCount(data.unread_count)
     } catch {
-      // swallow -- an empty bell is better than a crashed header
+
     } finally {
       setLoading(false)
     }
@@ -51,8 +46,7 @@ export function NotificationBell() {
     fetchNotifications()
   }, [fetchNotifications])
 
-  // live push -> prepend directly and bump the badge, so unread count
-  // never goes stale even if the panel is closed
+
   const handleSocketMessage = useCallback((msg: SocketMessage) => {
     if (msg.channel !== 'notification') return
     const push = msg as NotificationPush
@@ -70,7 +64,7 @@ export function NotificationBell() {
       ...prev,
     ])
   }, [])
-  useSightingSocket(handleSocketMessage)
+  useSocketSubscription(handleSocketMessage)
 
   // close on outside click
   useEffect(() => {
@@ -91,7 +85,7 @@ export function NotificationBell() {
     try {
       await api.post(`/notifications/${id}/read`)
     } catch {
-      // best-effort -- local state already updated optimistically
+
     }
   }
 
@@ -101,7 +95,7 @@ export function NotificationBell() {
     try {
       await api.post('/notifications/read-all')
     } catch {
-      // best-effort -- local state already updated optimistically
+
     }
   }
 

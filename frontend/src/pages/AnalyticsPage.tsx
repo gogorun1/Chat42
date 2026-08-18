@@ -5,7 +5,7 @@ import {
   type AnalyticsSummary,
   type Zone,
 } from '../lib/api'
-import { useSightingSocket } from '../lib/useSightingSocket'
+import { useSocketSubscription } from '../context/SocketContext'
 import { BarChart } from '../components/charts/BarChart'
 import { LineChart } from '../components/charts/LineChart'
 import { PieChart } from '../components/charts/PieChart'
@@ -97,7 +97,7 @@ export function AnalyticsPage() {
     fetchSummary()
   }, [fetchSummary])
 
-  useSightingSocket(handleSocketMessage)
+  useSocketSubscription(handleSocketMessage)
 
   function selectQuickRange(d: number) {
     setDays(d)

@@ -56,9 +56,10 @@ async def sightings_socket(
     await manager.connect(websocket, user.id)
     try:
         while True:
-            # Clients don't need to send anything; incoming frames are just a
-            # liveness signal / ping-pong.
-            await websocket.receive_text()
+            message = await websocket.receive_text()
+
+            if message == "ping":
+                await websocket.send_text("pong")
     except WebSocketDisconnect:
         logger.info("User %s disconnected", user.id)
     except Exception:
