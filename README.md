@@ -30,7 +30,7 @@ Key features (see [Features List](#features-list) and [Modules](#modules) for wh
 | wding | PM, AI Dev | Owns **F9** (Moulinette AI persona: diary generation, Q&A) and the cat-detection half of **F2** |
 | slou | PO, Design, Frontend Dev | Owns **F4** (map, design system) |
 | lshenghu | Frontend Dev | Owns **F2** (upload flow, PWA) |
-| shazhu |  Fullstack Dev | Owns **F5** (WebSocket, notifications) and the remainder of **F8** (search, admin dashboard) |
+| shazhu |  Fullstack Dev | Owns **F5** (WebSocket, notifications) and **F8** (search, admin dashboard) |
 
 ## Project Management
 
@@ -57,19 +57,52 @@ Key features (see [Features List](#features-list) and [Modules](#modules) for wh
 
 Currently one table (more will be added as F2/F4/F5/F7/F8/F10 land — this section should be kept in sync):
 
-**`users`**
+**users**
 
 | Column | Type | Notes |
 |---|---|---|
-| `id` | integer, PK | |
-| `email` | varchar(255), unique, not null | Login identifier for both auth methods |
-| `password_hash` | varchar(255), nullable | bcrypt hash; `null` for accounts created purely via 42 OAuth |
-| `ft_login` | varchar(255), unique, nullable | 42 username; set when the account is linked to/created via 42 OAuth |
-| `created_at` | timestamptz | |
-| `updated_at` | timestamptz | |
-| `zone` | svg, TypeScript |svg for visu, TypeScript for zone data and selection logic|
+| id | integer, PK | |
+| email | varchar(255), unique, indexed, not null | Login identifier for both auth methods |
+| password_hash | varchar(255), nullable | bcrypt hash; null for accounts created purely via 42 OAuth |
+| ft_login | varchar(255), unique, indexed, nullable | 42 username; set when the account is linked to/created via 42 OAuth |
+| role | enum `user_role` (`user`, `moderator`, `admin`), not null, default `user` | Drives F10 permission checks, also read by F8's moderation controls on the search page |
+| display_name | varchar(50), nullable | Falls back to `email.split("@")[0]` in the UI until set |
+| avatar_path | varchar(255), nullable | Served as `/uploads/{avatar_path}` via the `avatar_url` property |
+| guess_points | integer, not null, default 5 | Spent/earned by F4's guessing game |
+| created_at | timestamptz, server default now() | |
+| updated_at | timestamptz, server default now(), updates on change | |
 
-<!-- TODO: add sightings, friendships, etc. tables here as they're built, plus a schema diagram. -->
+**zones**
+
+| Column | Type | Notes |
+|---|---|---|
+| id | integer, PK | |
+| slug | varchar(64), unique, indexed, not null | Stable identifier used by the frontend map (e.g. `cantine_0`) |
+| name | varchar(128), not null | Display name (e.g. "Shokudo") |
+
+**sightings**
+
+| Column | Type | Notes |
+|---|---|---|
+| id | integer, PK | |
+| user_id | integer, FK → users.id, indexed, not null | Reporter |
+| zone_id | integer, FK → zones.id, indexed, not null | |
+| image_path | varchar(512), not null | Stored upload path; served as `/uploads/{image_path}` |
+| created_at | timestamptz, server default now() | Sort key for F8's search, and for F5's real-time "new sighting" ordering |
+
+**notifications**
+
+| Column | Type | Notes |
+|---|---|---|
+| id | UUID, PK, default `uuid4()` | |
+| user_id | integer, FK → users.id `ON DELETE CASCADE`, indexed, not null | Recipient |
+| type | enum `notification_type` (`sighting_nearby`, `sighting_approved`, `sighting_rejected`, `sighting_removed`, `guess_result`, `badge_earned`, `friend_request`, `role_changed`, `system`), not null | Drives which icon/copy renders in the notification bell |
+| title | varchar(140), not null | Human-readable message, e.g. "You earned a new badge!" |
+| body | text, nullable | Optional longer detail |
+| data | JSONB, not null, default `{}` | Structured payload (e.g. which sighting/zone triggered it) for the frontend to act on |
+| read_at | timestamptz, nullable | Null = unread; `is_read` property derived from whether this is set |
+| created_at | timestamptz, server default now() | |
+
 
 ## Features List
 
@@ -95,12 +128,12 @@ Target: 14 mandatory points + up to 5 bonus points (19 total). Status reflects w
 | Module | Type | Pts | Status | Branch |
 |---|---|---|---|---|
 | Web framework (React + FastAPI) | Major | 2 | ✅ Done | F1 |
-| Real-time features (WebSocket) | Major | 2 | ⬜ Not started | F5 |
-| Standard user management | Major | 2 | 🟡 Partial (auth done; profile/avatar/friends pending) | F1/F7 |
-| Advanced permissions | Major | 2 | ⬜ Not started | F10 |
-| Advanced analytics dashboard | Major | 2 | ⬜ Not started | F8 |
+| Real-time features (WebSocket) | Major | 2 | ✅ Done | F5 |
+| Standard user management | Major | 2 | ✅ Done  | F1/F7 |
+| Advanced permissions | Major | 2 | ✅ Done | F10 |
+| Advanced analytics dashboard | Major | 2 | ✅ Done | F8 |
 | ORM (SQLAlchemy) | Minor | 1 | ✅ Done | F1 |
-| Advanced search | Minor | 1 | ⬜ Not started | F8 |
+| Advanced search | Minor | 1 | ✅ Done | F8 |
 | OAuth 2.0 (42) | Minor | 1 | ✅ Done | F1 |
 | PWA | Minor | 1 | 🟡 Partial (manifest + service worker; verify install on device) | F2 |
 
@@ -112,7 +145,7 @@ Target: 14 mandatory points + up to 5 bonus points (19 total). Status reflects w
 | File upload | Minor | 1 | ✅ Done | F2 |
 | Image recognition (zero-shot cat detection) | Minor | 1 | 🟡 Partial (interface + stub; wding's model pending) | F2 |
 | Gamification | Minor | 1 | ⬜ Not started | F7 |
-| Notification system *(buffer, only if needed)* | Minor | 1 | ⬜ Not started | F5 |
+| Notification system *(buffer, only if needed)* | Minor | 1 | ✅ Done | F5 |
 
 <!-- TODO: as each module is finished, add its implementation description + justification here, especially for anything that ends up being a custom "Modules of choice" entry. -->
 
@@ -142,7 +175,12 @@ Target: 14 mandatory points + up to 5 bonus points (19 total). Status reflects w
 
 **lshenghu** — F2  — *not started yet*
 
-**shazhu** — F5 & F8 (remainder) — *not started yet*
+**shazhu** — F5 & F8 
+- Real-time notification system over WebSocket: badge-earned, role-change, and sighting-deletion notifications are pushed to the client the instant they happen — via a notify_user() service on the backend and a live NotificationBell component on the frontend — rather than the client having to poll for updates.
+- Advanced sighting search (/api/search/sightings): filter by zone and date range, sortable by creation date or zone, paginated results. All filters are strictly typed (Pydantic int/datetime), so malformed input is rejected with a 422 before it ever reaches the database — verified directly with manual SQL-injection-style test payloads.
+- Analytics dashboard: admin-only, gated behind the F10 role check, including a top-reporters view that intentionally stays all-time regardless of whichever date/zone filters are selected elsewhere on the page.
+- Role-based moderation integrated into search: moderators/admins can remove a sighting directly from the search results, which triggers the F5 deletion notification to the original reporter — connecting F5, F8, and F10's role system.
+
 
 ## Instructions
 
@@ -214,4 +252,4 @@ The backend's interactive API reference is available at https://localhost/docs w
 | wding | F2, F9 | |
 | slou | F4 |AI is used to transform real photos of the school and cat into a painting style.  |
 | lshenghu | F2 |  |
-| shazhu | F5, F8 |  |
+| shazhu | F5, F8 | F8	Used to help review WebSocket/notification architecture and role-based moderation logic, debug an Nginx trailing-slash redirect and an Alembic migration issue. |
