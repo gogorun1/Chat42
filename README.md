@@ -164,8 +164,8 @@ Target: 14 mandatory points + up to 5 bonus points (19 total). Status reflects w
 - Gamification backend (F7): badge rules and award logic, leaderboard endpoint, guess-the-zone points game (with **shazhu**, who wired badge-earned events into the F5 notification pipeline).
 
 **wding** — F9 & F2 (cat detection)
-- Moulinette AI persona (F9): Gemini-backed LLM client with streaming support, cached daily diary generation, and natural-language Q&A served over SSE with per-user rate limiting.
-- Zero-shot cat detection (F2): HuggingFace `zero-shot-object-detection` pipeline wired into the sighting-upload flow to filter out non-cat photos before they're stored.
+- Moulinette AI persona (F9): grounded diary generation and Q&A using aggregated sighting data, a Gemini-backed LLM interface, PostgreSQL daily caching, SSE streaming, and per-user rate limiting.
+- Zero-shot cat detection (F2): configurable HuggingFace `zero-shot-object-detection` pipeline integrated into the upload flow to reject non-cat photos before storage.
 
 **slou** — F4
 - Designed the core game concept and gameplay loop around finding Moulinette on the 42 campus.
