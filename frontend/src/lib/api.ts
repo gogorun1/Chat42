@@ -156,7 +156,9 @@ export type RecentSighting = {
  
 export type AnalyticsSummary = {
   total_sightings: number
-  window_days: number
+  period_sightings: number
+  window_start: string
+  window_end: string | null
   zone_activity: ZoneActivity[]
   daily_trend: DailyTrend[]
   top_reporters: TopReporter[]
@@ -165,6 +167,9 @@ export type AnalyticsSummary = {
  
 export type AnalyticsParams = {
   days?: number
+  date_from?: string
+  date_to?: string
+  zone_id?: number
   reporter_limit?: number
 }
  
