@@ -101,6 +101,10 @@ export type LeaderboardEntry = {
   score: number
 }
 
+export type GuessCreate = {
+  zone_id: number
+}
+
 export type GuessResult = {
   correct: boolean
   guess_points: number
