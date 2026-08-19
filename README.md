@@ -110,18 +110,20 @@ Currently one table (more will be added as F2/F4/F5/F7/F8/F10 land — this sect
 
 | Feature | Description | Implemented by |
 |---|---|---|
-| Email/password signup & login | Account creation and login with bcrypt-hashed passwords, session via JWT cookie | \<your-login\> (F1) |
-| 42 OAuth login | "Continue with 42" — authorizes via 42, auto-links to an existing account by email or creates a new one | \<your-login\> (F1) |
-| Session persistence & logout | `GET /auth/me` restores login state on page load; logout clears the session cookie | \<your-login\> (F1) |
-| Cat sighting upload | Photo upload with map-zone tagging, validated through cat-detection pipeline | \<your-login\> (F2) |
-| PWA install | Installable web app with offline app shell via service worker | \<your-login\> (F2) |
-| Protected routes | Unauthenticated users are redirected to `/login` | \<your-login\> (F1) |
-| Privacy Policy & Terms of Service pages | Project-specific content, linked from a site-wide footer | \<your-login\> (F1) |
-| HTTPS everywhere | All external traffic terminated at Nginx with TLS; direct HTTP access to frontend/backend containers is not possible | \<your-login\> (F1) |
+| Email/password signup & login | Account creation and login with bcrypt-hashed passwords, session via JWT cookie | jili (F1) |
+| 42 OAuth login | "Continue with 42" — authorizes via 42, auto-links to an existing account by email or creates a new one | jili (F1) |
+| Session persistence & logout | `GET /auth/me` restores login state on page load; logout clears the session cookie | jili (F1) |
+| Cat sighting upload | Photo upload with map-zone tagging, validated through cat-detection pipeline | lshenghu (F2 upload flow); wding (F2 cat-detection pipeline) |
+| PWA install | Installable web app with offline app shell via service worker | lshenghu (F2) |
+| Protected routes | Unauthenticated users are redirected to `/login` | jili (F1) |
+| Privacy Policy & Terms of Service pages | Project-specific content, linked from a site-wide footer | jili (F1) |
+| HTTPS everywhere | All external traffic terminated at Nginx with TLS; direct HTTP access to frontend/backend containers is not possible | jili (F1) |
 | Real-time notifications (WebSocket) | Instant, push-based delivery — no polling — for badge-earned, role-change, and sighting-deletion events, surfaced via a live notification bell | shazhu (F5) |
 | Advanced sighting search | `/api/search/sightings` — filter by zone and date range, sort by creation date or zone, paginated results; all filters strictly typed so malformed input is rejected before it reaches the database | shazhu (F8) |
-| Analytics dashboard | Admin-only charts over sighting history, gated behind the F10 role check, including an all-time top-reporters view independent of the currently selected date/zone filters | shazhu (F8) |
+| Analytics dashboard | Admin-only charts over sighting history, gated behind the F10 role check, including an all-time top-reporters view independent of the currently selected date/zone filters, with CSV/PDF export | shazhu (F8) |
 | Role-based moderation on search results | Moderators/admins can remove a sighting directly from the search page, triggering the F5 deletion notification to the original reporter | shazhu (F5 + F8, integrating with jili F10's role system) |
+| Moulinette AI diary & Q&A | Daily auto-generated diary entry (cached per day) and streaming natural-language Q&A over SSE, both grounded in the day's real sighting data, with rate limiting | wding (F9) |
+| Gamification | Milestone/streak badges, a combined leaderboard (sightings + guess points), and a "guess the current zone" points game | jili + shazhu (F7) |
 
 ## Modules
 
@@ -133,25 +135,27 @@ Target: 14 mandatory points + up to 5 bonus points (19 total). Status reflects w
 |---|---|---|---|---|
 | Web framework (React + FastAPI) | Major | 2 | ✅ Done | F1 |
 | Real-time features (WebSocket) | Major | 2 | ✅ Done | F5 |
-| Standard user management | Major | 2 | ✅ Done  | F1/F7 |
+| Standard user management | Major | 2 | 🟡 Partial — profile/avatar/friends done; **online status not yet implemented** (`websocket_manager.py` has no presence tracking) | F1/F7 |
 | Advanced permissions | Major | 2 | ✅ Done | F10 |
-| Advanced analytics dashboard | Major | 2 | ✅ Done | F8 |
+| Advanced analytics dashboard | Major | 2 | ✅ Done — charts + CSV/PDF export (`lib/exportHelpers.ts`) | F8 |
 | ORM (SQLAlchemy) | Minor | 1 | ✅ Done | F1 |
 | Advanced search | Minor | 1 | ✅ Done | F8 |
 | OAuth 2.0 (42) | Minor | 1 | ✅ Done | F1 |
-| PWA | Minor | 1 | 🟡 Partial (manifest + service worker; verify install on device) | F2 |
+| PWA | Minor | 1 | ✅ Done — `vite-plugin-pwa` with manifest + workbox runtime caching (`vite.config.ts`); verify install on a real device before the defense | F2 |
 
 ### Differentiation (5 pts, plus 1 pt buffer)
 
 | Module | Type | Pts | Status | Branch |
 |---|---|---|---|---|
-| LLM system interface (Moulinette persona) | Major | 2 | ⬜ Not started | F9 |
+| LLM system interface (Moulinette persona) | Major | 2 | ✅ Done — Gemini client with streaming, diary generation + Q&A over SSE, rate limiting (`routers/ai.py`, `services/gemini_llm_client.py`, `services/question_service.py`) | F9 |
 | File upload | Minor | 1 | ✅ Done | F2 |
-| Image recognition (zero-shot cat detection) | Minor | 1 | 🟡 Partial (interface + stub; wding's model pending) | F2 |
-| Gamification | Minor | 1 | ⬜ Not started | F7 |
+| Image recognition (zero-shot cat detection) | Minor | 1 | ✅ Done — real HuggingFace `zero-shot-object-detection` pipeline, wired into the sighting-upload flow (`services/cat_detector_factory.py`, `routers/sightings.py`); the "tagging" half of the module description is thin (binary cat/not-cat only) — worth a note in the demo | F2 |
+| Gamification | Minor | 1 | ✅ Done — badge rules, leaderboard, guess-the-zone points game (`services/gamification_service.py`, `routers/gamification.py`) | F7 |
 | Notification system *(buffer, only if needed)* | Minor | 1 | ✅ Done | F5 |
 
 <!-- TODO: as each module is finished, add its implementation description + justification here, especially for anything that ends up being a custom "Modules of choice" entry. -->
+
+> Status verified against the actual code on 2026-08-19 (not just branch/PR titles). Core + differentiation total to 19/19 at the code level; the one open gap is online status for the Standard user management module.
 
 ## Individual Contributions
 
@@ -163,9 +167,12 @@ Target: 14 mandatory points + up to 5 bonus points (19 total). Status reflects w
 - PostgreSQL + SQLAlchemy async + Alembic migrations.
 - Nginx reverse proxy with self-signed HTTPS, routing all traffic through a single origin.
 - Privacy Policy / Terms of Service pages and site-wide footer.
-- F8 (search, analytics dashboard): not started yet.
+- Advanced permissions (F10): user/moderator/admin roles, role-gated views and actions.
+- Gamification backend (F7): badge rules and award logic, leaderboard endpoint, guess-the-zone points game (with **shazhu**, who wired badge-earned events into the F5 notification pipeline).
 
-**wding** — F9 & F2 (cat detection) — *not started yet*
+**wding** — F9 & F2 (cat detection)
+- Moulinette AI persona (F9): Gemini-backed LLM client with streaming support, cached daily diary generation, and natural-language Q&A served over SSE with per-user rate limiting.
+- Zero-shot cat detection (F2): HuggingFace `zero-shot-object-detection` pipeline wired into the sighting-upload flow to filter out non-cat photos before they're stored.
 
 **slou** — F4
 - Designed the core game concept and gameplay loop around finding Moulinette on the 42 campus.
@@ -177,7 +184,9 @@ Target: 14 mandatory points + up to 5 bonus points (19 total). Status reflects w
 - Moulinette intro/guess flow: users can choose to guess her location for 1 point, earn 3 points for a correct guess, or skip and directly view the last-sighting.
 - Cat sighting report UI (upload function realised by **lshenghu** - **F2**).
 
-**lshenghu** — F2  — *not started yet*
+**lshenghu** — F2
+- Cat sighting upload flow: photo capture/selection, preview, and map-zone tagging before submission.
+- PWA shell: web app manifest, service worker, and offline app-shell caching via `vite-plugin-pwa`.
 
 **shazhu** — F5 & F8 
 - Real-time notification system over WebSocket: badge-earned, role-change, and sighting-deletion notifications are pushed to the client the instant they happen — via a notify_user() service on the backend and a live NotificationBell component on the frontend — rather than the client having to poll for updates.
@@ -252,7 +261,7 @@ The backend's interactive API reference is available at https://localhost/docs w
 ## AI-usage
 | Login | Part | AI-usage |
 |---|---|---|
-| jili | F1, F7, F10 |    |
+| jili | F1, F7, F10 | Used to help debug issues during development (Docker/Nginx setup, Alembic migrations, auth/permissions logic). |
 | wding | F2, F9 | |
 | slou | F4 |AI is used to transform real photos of the school and cat into a painting style.  |
 | lshenghu | F2 |  |
