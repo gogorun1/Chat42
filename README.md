@@ -18,11 +18,8 @@ Key features (see [Features List](#features-list) and [Modules](#modules) for wh
 - Friends, notifications, gamification (achievements, leaderboard, sighting-prediction game)
 - Real-time updates over WebSocket when new sightings come in
 
-<!-- TODO: once F2/F4/F5/F7/F8/F9/F10 land, expand this list to match what's actually shipped. -->
 
 ## Team Information
-
-<!-- TODO: fill in real 42 logins, names, and confirm final role assignments. -->
 
 | Login | Role(s) | Responsibilities |
 |---|---|---|
@@ -33,8 +30,6 @@ Key features (see [Features List](#features-list) and [Modules](#modules) for wh
 | shazhu |  Fullstack Dev | Owns **F5** (WebSocket, notifications) and **F8** (search, admin dashboard) |
 
 ## Project Management
-
-<!-- TODO: fill in actual practices once the team settles on them. -->
 
 - Task tracking: \<GitHub Issues, Wechat\>
 - Communication: \<Wechat, Google meeting\>
@@ -54,8 +49,6 @@ Key features (see [Features List](#features-list) and [Modules](#modules) for wh
 | Deployment | Docker Compose, single command | `frontend`, `backend`, `postgres`, `nginx` services; non-root container users (UID/GID configurable via `.env`) so bind-mounted dev files stay owned by the host user. |
 
 ## Database Schema
-
-Currently one table (more will be added as F2/F4/F5/F7/F8/F10 land — this section should be kept in sync):
 
 **users**
 
@@ -118,6 +111,8 @@ Currently one table (more will be added as F2/F4/F5/F7/F8/F10 land — this sect
 | Protected routes | Unauthenticated users are redirected to `/login` | jili (F1) |
 | Privacy Policy & Terms of Service pages | Project-specific content, linked from a site-wide footer | jili (F1) |
 | HTTPS everywhere | All external traffic terminated at Nginx with TLS; direct HTTP access to frontend/backend containers is not possible | jili (F1) |
+| Interactive campus map UI| SVG-based campus map with zone selection, and structured TypeScript zone data used to associate sightings with their location| slou(F4)|
+| Website UI & responsive design | React/TypeScript frontend with Tailwind, responsive layouts, reusable UI components, forms, navigation, buttons, and vintage game styling and animations.| slou(F4)|
 | Real-time notifications (WebSocket) | Instant, push-based delivery — no polling — for badge-earned, role-change, and sighting-deletion events, surfaced via a live notification bell | shazhu (F5) |
 | Advanced sighting search | `/api/search/sightings` — filter by zone and date range, sort by creation date or zone, paginated results; all filters strictly typed so malformed input is rejected before it reaches the database | shazhu (F8) |
 | Analytics dashboard | Admin-only charts over sighting history, gated behind the F10 role check, including an all-time top-reporters view independent of the currently selected date/zone filters, with CSV/PDF export | shazhu (F8) |
@@ -158,8 +153,6 @@ Target: 14 mandatory points + up to 5 bonus points (19 total). Status reflects w
 > Status verified against the actual code on 2026-08-19 (not just branch/PR titles). Core + differentiation total to 19/19 at the code level; the one open gap is online status for the Standard user management module.
 
 ## Individual Contributions
-
-<!-- TODO: every member fills in their own section as they contribute. -->
 
 **jili** — F1 (Platform) & F7 & F10
 - Backend/frontend scaffolding (FastAPI + React/Vite/Tailwind), Docker Compose setup with non-root containers.
@@ -248,8 +241,6 @@ See [`docs/API.md`](docs/API.md) for how auth works end to end and conventions f
 The backend's interactive API reference is available at https://localhost/docs while the stack is running.
 
 ## Resources
-
-<!-- TODO: add real references as each branch is built (papers, library docs, tutorials actually used). -->
 
 - [FastAPI documentation](https://fastapi.tiangolo.com/)
 - [SQLAlchemy 2.0 async ORM guide](https://docs.sqlalchemy.org/en/20/orm/extensions/asyncio.html)
