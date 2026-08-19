@@ -255,5 +255,5 @@ The backend's interactive API reference is available at https://localhost/docs w
 | jili | F1, F7, F10 | Used to help debug issues during development (Docker/Nginx setup, Alembic migrations, auth/permissions logic). |
 | wding | F2, F9 | |
 | slou | F4 |AI is used to transform real photos of the school and cat into a painting style.  |
-| lshenghu | F2 |  |
+| lshenghu | F2 | Used to help implement and debug frontend/backend integration during development. |
 | shazhu | F5, F8 | Used to help review WebSocket/notification architecture and role-based moderation logic, debug an Nginx trailing-slash redirect and an Alembic migration issue. |
